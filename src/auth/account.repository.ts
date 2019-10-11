@@ -1,13 +1,14 @@
 import * as crypto from 'crypto';
+import * as jwt from 'jsonwebtoken';
 import { EntityRepository, Repository } from 'typeorm';
 import { Account } from './account.entity';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
-import { BadRequestException, ConflictException, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpStatus, InternalServerErrorException, Res, UnauthorizedException } from '@nestjs/common';
 
 @EntityRepository(Account)
 export class AccountRepository extends Repository<Account>
 {
-    async signUp(authCredentialsDto: AuthCredentialsDto): Promise<void>
+    async signUp(authCredentialsDto: AuthCredentialsDto, @Res() res): Promise<void>
     {
         const { username, password, email } = authCredentialsDto;
         const account = new Account();
@@ -26,6 +27,7 @@ export class AccountRepository extends Repository<Account>
         try
         {
             await account.save();
+            AccountRepository.createToken(account, HttpStatus.CREATED, res);
         }
         catch (error)
         {
@@ -36,8 +38,29 @@ export class AccountRepository extends Repository<Account>
         }
     }
 
+    async signIn(authCredentialsDto: AuthCredentialsDto, @Res() res): Promise<void>
+    {
+        const { username, password } = authCredentialsDto;
+        const account = await this.findOne({ where: { username } });
+
+        if (!account || (await AccountRepository.hashPassword(username, password)) !== account.sha_pass_hash)
+            throw new UnauthorizedException('Incorrect username or password');
+
+        AccountRepository.createToken(account, HttpStatus.OK, res);
+    }
+
     private static async hashPassword(username: string, password: string): Promise<string>
     {
         return crypto.createHash('sha1').update(`${username.toUpperCase()}:${password}`.toUpperCase()).digest('hex').toUpperCase();
+    }
+
+    private static createToken(account: any, statusCode: number, res: any): void
+    {
+        const token = jwt.sign({ account: account.id }, process.env.JWT_SECRET_KEY, { expiresIn: process.env.JWT_EXPIRES_IN });
+
+        account.sha_pass_hash = undefined;
+        account.reg_mail = undefined;
+
+        res.status(statusCode).json({ status: 'success', token, data: { account } });
     }
 }
