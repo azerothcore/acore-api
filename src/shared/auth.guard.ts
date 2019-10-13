@@ -1,5 +1,5 @@
-import { log, promisify } from 'util';
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { promisify } from 'util';
+import { CanActivate, ExecutionContext, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import { Account } from '../auth/account.entity';
 
@@ -11,18 +11,15 @@ export class AuthGuard implements CanActivate
     async canActivate(context: ExecutionContext): Promise<boolean>
     {
         const request = context.switchToHttp().getRequest();
-
-        await this.validateToken(request.headers.authorization);
-
-        return true;
+        return await this.validateToken(request);
     }
 
-    private async validateToken(auth: string)
+    private async validateToken(request: any): Promise<boolean>
     {
         let token;
 
-        if (auth && auth.startsWith('Bearer'))
-            token = auth.split(' ')[1];
+        if (request.headers.authorization && request.headers.authorization.startsWith('Bearer'))
+            token = request.headers.authorization.split(' ')[1];
 
         if (!token)
             throw new UnauthorizedException('You are not logged in! Please log in to get access.');
@@ -41,11 +38,20 @@ export class AuthGuard implements CanActivate
 
             if (error.name === 'TokenExpiredError')
                 throw new UnauthorizedException('Your token has expired! Please log in again');
+
+            if (error)
+                throw new InternalServerErrorException('Something went wrong! Please try again later');
         }
 
         const accountExists = await Account.findOne({ where: { id: this.decoded.id } });
+        accountExists.sha_pass_hash = undefined;
 
         if (!accountExists)
             throw new UnauthorizedException('The account belonging to this token does no longer exist.');
+
+        request.account = accountExists;
+
+        // @TODO CHECK IF USER CHANGED PASSWORD AFTER THE TOKEN WAS ISSUED
+        return true;
     }
 }

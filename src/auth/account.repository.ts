@@ -59,7 +59,6 @@ export class AccountRepository extends Repository<Account>
         const token = jwt.sign({ id: account.id }, process.env.JWT_SECRET_KEY, { expiresIn: process.env.JWT_EXPIRES_IN });
 
         account.sha_pass_hash = undefined;
-        account.reg_mail = undefined;
 
         res.status(statusCode).json({ status: 'success', token, data: { account } });
     }

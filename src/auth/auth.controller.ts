@@ -2,6 +2,7 @@ import { Body, Controller, Get, Post, Res, UseGuards, ValidationPipe } from '@ne
 import { AuthService } from './auth.service';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { AuthGuard } from '../shared/auth.guard';
+import { Account } from './account.decorator';
 
 @Controller('auth')
 export class AuthController
@@ -22,8 +23,8 @@ export class AuthController
 
     @Get('/testGuard')
     @UseGuards(new AuthGuard())
-    async testGuard(@Res() res)
+    async testGuard(@Res() res, @Account() account)
     {
-        res.status(200).json({ status: 'success', guard: 'DATA' });
+        res.status(200).json({ status: 'success', account });
     }
 }
