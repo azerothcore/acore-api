@@ -1,6 +1,7 @@
-import { Body, Controller, Post, Res, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Post, Res, UseGuards, ValidationPipe } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
+import { AuthGuard } from '../shared/auth.guard';
 
 @Controller('auth')
 export class AuthController
@@ -17,5 +18,12 @@ export class AuthController
     async signIn(@Body() authCredentialsDto: AuthCredentialsDto, @Res() res): Promise<void>
     {
         return this.authService.signIn(authCredentialsDto, res);
+    }
+
+    @Get('/testGuard')
+    @UseGuards(new AuthGuard())
+    async testGuard(@Res() res)
+    {
+        res.status(200).json({ status: 'success', guard: 'DATA' });
     }
 }

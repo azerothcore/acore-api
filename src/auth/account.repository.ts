@@ -56,7 +56,7 @@ export class AccountRepository extends Repository<Account>
 
     private static createToken(account: any, statusCode: number, res: any): void
     {
-        const token = jwt.sign({ account: account.id }, process.env.JWT_SECRET_KEY, { expiresIn: process.env.JWT_EXPIRES_IN });
+        const token = jwt.sign({ id: account.id }, process.env.JWT_SECRET_KEY, { expiresIn: process.env.JWT_EXPIRES_IN });
 
         account.sha_pass_hash = undefined;
         account.reg_mail = undefined;
