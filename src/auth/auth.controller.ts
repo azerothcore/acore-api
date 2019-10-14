@@ -21,6 +21,12 @@ export class AuthController
         return this.authService.signIn(authCredentialsDto, res);
     }
 
+    @Post('/forgotPassword')
+    async forgotPassword(@Body() authCredentialsDto: AuthCredentialsDto, @Res() res): Promise<void>
+    {
+        return this.authService.forgotPassword(authCredentialsDto, res);
+    }
+
     @Get('/testGuard')
     @UseGuards(new AuthGuard())
     async testGuard(@Res() res, @Account() account)
