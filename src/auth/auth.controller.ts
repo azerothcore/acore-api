@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Post, Req, Res, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Req, Res, UseGuards, ValidationPipe } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { AuthGuard } from '../shared/auth.guard';
 import { Account } from './account.decorator';
+import { AccountPasswordDto } from './dto/account-password.dto';
 
 @Controller('auth')
 export class AuthController
@@ -25,6 +26,12 @@ export class AuthController
     async forgotPassword(@Body() authCredentialsDto: AuthCredentialsDto, @Req() req, @Res() res): Promise<void>
     {
         return this.authService.forgotPassword(authCredentialsDto, req, res);
+    }
+
+    @Patch('/resetPassword/:token')
+    async resetPassword(@Body(ValidationPipe) accountPasswordDto: AccountPasswordDto, @Res() res, @Param('token') token: string)
+    {
+        return this.authService.resetPassword(accountPasswordDto, res, token);
     }
 
     @Get('/testGuard')
