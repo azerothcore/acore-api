@@ -2,6 +2,7 @@ import { promisify } from 'util';
 import { CanActivate, ExecutionContext, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import { Account } from '../auth/account.entity';
+import { AccountPassword } from '../auth/account-password.entity';
 
 @Injectable()
 export class AuthGuard implements CanActivate
@@ -49,9 +50,18 @@ export class AuthGuard implements CanActivate
         if (!accountExists)
             throw new UnauthorizedException('The account belonging to this token does no longer exist.');
 
+        const accountPassword = await AccountPassword.findOne({ where: { id: this.decoded.id } });
+
+        if (accountPassword && accountPassword.password_changed_at)
+        {
+            const changedTimestamp = accountPassword.password_changed_at.getTime() / 1000;
+
+            if (this.decoded.iat < changedTimestamp)
+                throw new UnauthorizedException('User recently changed password! Please log in again');
+        }
+
         request.account = accountExists;
 
-        // @TODO CHECK IF USER CHANGED PASSWORD AFTER THE TOKEN WAS ISSUED
         return true;
     }
 }
