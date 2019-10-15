@@ -1,4 +1,4 @@
-import { Injectable, Res } from '@nestjs/common';
+import { Injectable, Req, Res } from '@nestjs/common';
 import { AccountRepository } from './account.repository';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
@@ -22,8 +22,8 @@ export class AuthService
         return this.accountRepository.signIn(authCredentialsDto, res);
     }
 
-    async forgotPassword(authCredentialsDto: AuthCredentialsDto, @Res() res): Promise<void>
+    async forgotPassword(authCredentialsDto: AuthCredentialsDto, @Req() req, @Res() res): Promise<void>
     {
-        return this.accountPasswordRepository.forgotPassword(authCredentialsDto, res);
+        return this.accountPasswordRepository.forgotPassword(authCredentialsDto, req, res);
     }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Res, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, Res, UseGuards, ValidationPipe } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { AuthGuard } from '../shared/auth.guard';
@@ -22,9 +22,9 @@ export class AuthController
     }
 
     @Post('/forgotPassword')
-    async forgotPassword(@Body() authCredentialsDto: AuthCredentialsDto, @Res() res): Promise<void>
+    async forgotPassword(@Body() authCredentialsDto: AuthCredentialsDto, @Req() req, @Res() res): Promise<void>
     {
-        return this.authService.forgotPassword(authCredentialsDto, res);
+        return this.authService.forgotPassword(authCredentialsDto, req, res);
     }
 
     @Get('/testGuard')
