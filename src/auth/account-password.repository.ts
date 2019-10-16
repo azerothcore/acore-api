@@ -21,7 +21,7 @@ export class AccountPasswordRepository extends Repository<AccountPassword>
         const passwordResetExpires: any = new Date(Date.now() + 10 * 60 * 1000).toISOString();
         const passwordResetToken: string = crypto.createHash('sha256').update(resetToken).digest('hex');
 
-        const accountPassword = new AccountPassword();
+        const accountPassword = this.create();
         accountPassword.id = account.id;
         accountPassword.password_reset_expires = passwordResetExpires;
         accountPassword.password_reset_token = passwordResetToken;
@@ -42,7 +42,7 @@ export class AccountPasswordRepository extends Repository<AccountPassword>
         }
     }
 
-    async resetPassword(accountPasswordDto: AccountPasswordDto, @Res() res, token: string)
+    async resetPassword(accountPasswordDto: AccountPasswordDto, @Res() res, token: string): Promise<void>
     {
         const { password, passwordConfirm } = accountPasswordDto;
         const hashedToken: string = crypto.createHash('sha256').update(token).digest('hex');

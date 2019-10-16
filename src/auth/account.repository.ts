@@ -4,6 +4,8 @@ import { EntityRepository, Repository } from 'typeorm';
 import { Account } from './account.entity';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { BadRequestException, ConflictException, HttpStatus, InternalServerErrorException, Res, UnauthorizedException } from '@nestjs/common';
+import { AccountPasswordDto } from './dto/account-password.dto';
+import { AccountPassword } from './account-password.entity';
 
 @EntityRepository(Account)
 export class AccountRepository extends Repository<Account>
@@ -11,7 +13,7 @@ export class AccountRepository extends Repository<Account>
     async signUp(authCredentialsDto: AuthCredentialsDto, @Res() res): Promise<void>
     {
         const { username, password, email } = authCredentialsDto;
-        const account = new Account();
+        const account = this.create();
         const emailExists = await this.findOne({ reg_mail: email });
 
         if (emailExists)
@@ -45,6 +47,27 @@ export class AccountRepository extends Repository<Account>
 
         if (!account || (await AccountRepository.hashPassword(username, password)) !== account.sha_pass_hash)
             throw new UnauthorizedException('Incorrect username or password');
+
+        AccountRepository.createToken(account, HttpStatus.OK, res);
+    }
+
+    async updatePassword(accountPasswordDto: AccountPasswordDto, @Res() res, accountID)
+    {
+        const account = await this.findOne({ where: { id: accountID } });
+
+        if (!account || (await AccountRepository.hashPassword(account.username, accountPasswordDto.passwordCurrent)) !== account.sha_pass_hash)
+            throw new UnauthorizedException('Your current password is wrong!');
+
+        if (accountPasswordDto.passwordConfirm !== accountPasswordDto.password)
+            throw new BadRequestException('Password does not match');
+
+        account.sha_pass_hash = await AccountRepository.hashPassword(account.username, accountPasswordDto.password);
+        await account.save();
+
+        const accountPassword = new AccountPassword();
+        accountPassword.id = account.id;
+        accountPassword.password_changed_at = new Date(Date.now() - 1000);
+        await accountPassword.save();
 
         AccountRepository.createToken(account, HttpStatus.OK, res);
     }

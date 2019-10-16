@@ -22,6 +22,13 @@ export class AuthController
         return this.authService.signIn(authCredentialsDto, res);
     }
 
+    @Patch('/updateMyPassword')
+    @UseGuards(new AuthGuard())
+    async updatePassword(@Body(ValidationPipe) accountPasswordDto: AccountPasswordDto, @Res() res, @Account('id') accountID)
+    {
+        return this.authService.updatePassword(accountPasswordDto, res, accountID);
+    }
+
     @Post('/forgotPassword')
     async forgotPassword(@Body() authCredentialsDto: AuthCredentialsDto, @Req() req, @Res() res): Promise<void>
     {
@@ -29,15 +36,8 @@ export class AuthController
     }
 
     @Patch('/resetPassword/:token')
-    async resetPassword(@Body(ValidationPipe) accountPasswordDto: AccountPasswordDto, @Res() res, @Param('token') token: string)
+    async resetPassword(@Body(ValidationPipe) accountPasswordDto: AccountPasswordDto, @Res() res, @Param('token') token: string): Promise<void>
     {
         return this.authService.resetPassword(accountPasswordDto, res, token);
-    }
-
-    @Get('/testGuard')
-    @UseGuards(new AuthGuard())
-    async testGuard(@Res() res, @Account() account)
-    {
-        res.status(200).json({ status: 'success', account });
     }
 }
