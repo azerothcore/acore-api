@@ -10,8 +10,8 @@ import { Account } from './account.decorator';
 export class AuthService
 {
     constructor(
-        @InjectRepository(AccountRepository, 'authConnection') private accountRepository: AccountRepository,
-        @InjectRepository(AccountPasswordRepository, 'authConnection') private accountPasswordRepository: AccountPasswordRepository
+        @InjectRepository(AccountRepository) private accountRepository: AccountRepository,
+        @InjectRepository(AccountPasswordRepository) private accountPasswordRepository: AccountPasswordRepository
     ) {}
 
     async signUp(authCredentialsDto: AuthCredentialsDto, @Res() res): Promise<void>

@@ -7,7 +7,7 @@ import { AccountPasswordRepository } from './account-password.repository';
 
 @Module(
 {
-    imports: [TypeOrmModule.forFeature([AccountRepository, AccountPasswordRepository], 'authConnection')],
+    imports: [TypeOrmModule.forFeature([AccountRepository, AccountPasswordRepository])],
     controllers: [AuthController],
     providers: [AuthService]
 })

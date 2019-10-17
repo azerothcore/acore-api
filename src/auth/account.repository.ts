@@ -12,7 +12,7 @@ export class AccountRepository extends Repository<Account>
 {
     async signUp(authCredentialsDto: AuthCredentialsDto, @Res() res): Promise<void>
     {
-        const { username, password, email } = authCredentialsDto;
+        const { username, password, email, passwordConfirm } = authCredentialsDto;
         const account = this.create();
         const emailExists = await this.findOne({ reg_mail: email });
 
@@ -53,15 +53,16 @@ export class AccountRepository extends Repository<Account>
 
     async updatePassword(accountPasswordDto: AccountPasswordDto, @Res() res, accountID)
     {
+        const { passwordCurrent, password, passwordConfirm } = accountPasswordDto;
         const account = await this.findOne({ where: { id: accountID } });
 
-        if (!account || (await AccountRepository.hashPassword(account.username, accountPasswordDto.passwordCurrent)) !== account.sha_pass_hash)
+        if (!account || (await AccountRepository.hashPassword(account.username, passwordCurrent)) !== account.sha_pass_hash)
             throw new UnauthorizedException('Your current password is wrong!');
 
-        if (accountPasswordDto.passwordConfirm !== accountPasswordDto.password)
+        if (passwordConfirm !== password)
             throw new BadRequestException('Password does not match');
 
-        account.sha_pass_hash = await AccountRepository.hashPassword(account.username, accountPasswordDto.password);
+        account.sha_pass_hash = await AccountRepository.hashPassword(account.username, password);
         await account.save();
 
         const accountPassword = new AccountPassword();

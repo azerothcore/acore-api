@@ -2,7 +2,6 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 export const AuthDatabaseConfig: TypeOrmModuleOptions =
 {
-    name: 'authConnection',
     type: 'mysql',
     host: process.env.AUTH_DATABASE_HOST,
     port: +process.env.AUTH_DATABASE_PORT,
