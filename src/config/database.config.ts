@@ -1,3 +1,4 @@
+import * as path from 'path';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 export const AuthDatabaseConfig: TypeOrmModuleOptions =
@@ -8,7 +9,7 @@ export const AuthDatabaseConfig: TypeOrmModuleOptions =
     username: process.env.AUTH_DATABASE_USERNAME,
     password: process.env.AUTH_DATABASE_PASSWORD,
     database: process.env.AUTH_DATABASE_NAME,
-    entities: [__dirname + '/../auth/*.entity.{js, ts}'],
+    entities: [path.join(__dirname, '..', 'auth', '*.entity.{js, ts}')],
     synchronize: true
 };
 
@@ -21,6 +22,6 @@ export const WebsiteDatabaseConfig: TypeOrmModuleOptions =
     username: process.env.WEB_SITE_DATABASE_USERNAME,
     password: process.env.WEB_SITE_DATABASE_PASSWORD,
     database: process.env.WEB_SITE_DATABASE_NAME,
-    entities: [__dirname + '/../website/*.entity.{js, ts}'],
+    entities: [path.join(__dirname, '..', 'website', '*.entity.{js, ts}')],
     synchronize: true
 };
