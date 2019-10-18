@@ -13,6 +13,30 @@ export const AuthDatabaseConfig: TypeOrmModuleOptions =
     synchronize: true
 };
 
+export const WorldDatabaseConfig: TypeOrmModuleOptions =
+{
+    type: 'mysql',
+    host: process.env.WORLD_DATABASE_HOST,
+    port: +process.env.WORLD_DATABASE_PORT,
+    username: process.env.WORLD_DATABASE_USERNAME,
+    password: process.env.WORLD_DATABASE_PASSWORD,
+    database: process.env.WORLD_DATABASE_NAME,
+    entities: [path.join(__dirname, '..', 'world', '*.entity.{js, ts}')],
+    synchronize: true
+};
+
+export const CharactersDatabaseConfig: TypeOrmModuleOptions =
+{
+    type: 'mysql',
+    host: process.env.CHARACTERS_DATABASE_HOST,
+    port: +process.env.CHARACTERS_DATABASE_PORT,
+    username: process.env.CHARACTERS_DATABASE_USERNAME,
+    password: process.env.CHARACTERS_DATABASE_PASSWORD,
+    database: process.env.CHARACTERS_DATABASE_NAME,
+    entities: [path.join(__dirname, '..', 'characters', '*.entity.{js, ts}')],
+    synchronize: true
+};
+
 export const WebsiteDatabaseConfig: TypeOrmModuleOptions =
 {
     name: 'websiteConnection',
