@@ -14,4 +14,10 @@ export class Account extends BaseEntity
 
     @Column()
     reg_mail: string;
+
+    @Column()
+    v: string;
+
+    @Column()
+    s: string;
 }

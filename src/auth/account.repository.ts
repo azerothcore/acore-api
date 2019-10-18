@@ -19,7 +19,7 @@ export class AccountRepository extends Repository<Account>
         if (emailExists)
             throw new ConflictException('Email address already exists');
 
-        if (authCredentialsDto.passwordConfirm !== password)
+        if (passwordConfirm !== password)
             throw new BadRequestException('Password does not match');
 
         account.username = username.toUpperCase();
@@ -62,6 +62,8 @@ export class AccountRepository extends Repository<Account>
         if (passwordConfirm !== password)
             throw new BadRequestException('Password does not match');
 
+        account.v = '0';
+        account.s = '0';
         account.sha_pass_hash = await AccountRepository.hashPassword(account.username, password);
         await account.save();
 

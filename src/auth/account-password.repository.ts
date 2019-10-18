@@ -56,6 +56,8 @@ export class AccountPasswordRepository extends Repository<AccountPassword>
 
         const account = await Account.findOne({ where: { id: accountPassword.id } });
         const SHA = await crypto.createHash('sha1').update(`${account.username.toUpperCase()}:${password}`.toUpperCase()).digest('hex').toUpperCase();
+        account.v = '0';
+        account.s = '0';
         account.sha_pass_hash = SHA;
         await account.save();
 
