@@ -1,8 +1,10 @@
-import { Body, Controller, Param, Patch, Post, Req, Res, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Param, Patch, Post, Req, Res, UseGuards, ValidationPipe, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AccountDto } from './dto/account.dto';
 import { AuthGuard } from '../shared/auth.guard';
 import { Account } from './account.decorator';
+import { getConnection } from 'typeorm';
+import { Account as AccountEntity } from './account.entity';
 import { AccountPasswordDto } from './dto/account_password.dto';
 import { EmailDto } from './dto/email.dto';
 
@@ -47,5 +49,19 @@ export class AuthController
     async resetPassword(@Body(ValidationPipe) accountPasswordDto: AccountPasswordDto, @Res() res, @Param('token') token: string): Promise<void>
     {
         return this.authService.resetPassword(accountPasswordDto, res, token);
+    }
+
+    @Get('/pulse/:days')
+    async pulse(@Param('days') days: number)
+    {
+       return await getConnection()
+          .getRepository(AccountEntity)
+          .createQueryBuilder('auth')
+          .select([
+            'COUNT(*) AS accounts',
+            'COUNT(DISTINCT(last_ip)) AS IPs'
+          ])
+          .where('DATEDIFF(NOW(), last_login) < ' + days)
+          .getRawMany();
     }
 }

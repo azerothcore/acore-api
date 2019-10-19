@@ -1,6 +1,4 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn, ManyToMany, ManyToOne, JoinTable, OneToOne, JoinColumn } from 'typeorm';
-import { Guild } from './guild.entity';
-import { GuildMember } from './guild_member.entity';
+import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ synchronize: false })
 export class Characters extends BaseEntity
