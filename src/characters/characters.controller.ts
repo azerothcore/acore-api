@@ -13,7 +13,7 @@ export class CharactersController
    @Get('/online')
     async online()
     {
-        const connection = getConnection();
+        const connection = getConnection('charactersConnection');
         return await connection
             .getRepository(Characters)
             .createQueryBuilder('characters')

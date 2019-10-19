@@ -15,6 +15,7 @@ export const AuthDatabaseConfig: TypeOrmModuleOptions =
 
 export const WorldDatabaseConfig: TypeOrmModuleOptions =
 {
+    name: 'worldConnection',
     type: 'mysql',
     host: process.env.WORLD_DATABASE_HOST,
     port: +process.env.WORLD_DATABASE_PORT,
@@ -27,6 +28,7 @@ export const WorldDatabaseConfig: TypeOrmModuleOptions =
 
 export const CharactersDatabaseConfig: TypeOrmModuleOptions =
 {
+    name: 'charactersConnection',
     type: 'mysql',
     host: process.env.CHARACTERS_DATABASE_HOST,
     port: +process.env.CHARACTERS_DATABASE_PORT,

@@ -4,6 +4,7 @@ import { AccountDto } from './dto/account.dto';
 import { AuthGuard } from '../shared/auth.guard';
 import { Account } from './account.decorator';
 import { AccountPasswordDto } from './dto/account_password.dto';
+import { EmailDto } from './dto/email.dto';
 
 @Controller('auth')
 export class AuthController
@@ -27,6 +28,13 @@ export class AuthController
     async updatePassword(@Body(ValidationPipe) accountPasswordDto: AccountPasswordDto, @Res() res, @Account('id') accountID)
     {
         return this.authService.updatePassword(accountPasswordDto, res, accountID);
+    }
+
+    @Patch('/updateMyEmail')
+    @UseGuards(new AuthGuard())
+    async updateEmail(@Body(ValidationPipe) emailDto: EmailDto, @Res() res, @Account('id') accountID)
+    {
+        return this.authService.updateEmail(emailDto, res, accountID);
     }
 
     @Post('/forgotPassword')

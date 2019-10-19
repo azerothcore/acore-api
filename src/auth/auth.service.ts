@@ -5,6 +5,7 @@ import { AccountDto } from './dto/account.dto';
 import { AccountPasswordRepository } from './account_password.repository';
 import { AccountPasswordDto } from './dto/account_password.dto';
 import { Account } from './account.decorator';
+import { EmailDto } from './dto/email.dto';
 
 @Injectable()
 export class AuthService
@@ -27,6 +28,11 @@ export class AuthService
     async updatePassword(accountPasswordDto: AccountPasswordDto, @Res() res, @Account() accountID)
     {
         return this.accountRepository.updatePassword(accountPasswordDto, res, accountID);
+    }
+
+    async updateEmail(emailDto: EmailDto, @Res() res, @Account() accountID)
+    {
+        return this.accountRepository.updateEmail(emailDto, res, accountID);
     }
 
     async forgotPassword(accountDto: AccountDto, @Req() req, @Res() res): Promise<void>

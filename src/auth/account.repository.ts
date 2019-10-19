@@ -3,9 +3,10 @@ import * as jwt from 'jsonwebtoken';
 import { EntityRepository, Repository } from 'typeorm';
 import { Account } from './account.entity';
 import { AccountDto } from './dto/account.dto';
-import { BadRequestException, ConflictException, HttpStatus, InternalServerErrorException, Res, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpStatus, InternalServerErrorException, Res, UnauthorizedException, } from '@nestjs/common';
 import { AccountPasswordDto } from './dto/account_password.dto';
 import { AccountPassword } from './account_password.entity';
+import { EmailDto } from './dto/email.dto';
 
 @EntityRepository(Account)
 export class AccountRepository extends Repository<Account>
@@ -36,7 +37,7 @@ export class AccountRepository extends Repository<Account>
             if (error.code === 'ER_DUP_ENTRY')
                 throw new ConflictException('Username already exists');
             else
-                throw new InternalServerErrorException();
+                throw new InternalServerErrorException('Something went wrong! Please try again later.');
         }
     }
 
@@ -73,6 +74,26 @@ export class AccountRepository extends Repository<Account>
         await accountPassword.save();
 
         AccountRepository.createToken(account, HttpStatus.OK, res);
+    }
+
+    async updateEmail(emailDto: EmailDto, @Res() res, accountID)
+    {
+        const { password, emailCurrent, email, emailConfirm } = emailDto;
+        const account = await this.findOne({ where: { id: accountID } });
+
+        if (emailCurrent.toUpperCase() !== account.reg_mail)
+            throw new BadRequestException('Your current email is wrong!');
+
+        if (emailConfirm.toUpperCase() !== email.toUpperCase())
+            throw new BadRequestException('Email does not match');
+
+        if (!account || (await AccountRepository.hashPassword(account.username, password)) !== account.sha_pass_hash)
+            throw new UnauthorizedException('Your current password is wrong!');
+
+        account.reg_mail = email.toUpperCase();
+        await account.save();
+
+        res.status(HttpStatus.OK).json({ status: 'success', message: 'Your email has been changed successfully!' });
     }
 
     private static async hashPassword(username: string, password: string): Promise<string>
