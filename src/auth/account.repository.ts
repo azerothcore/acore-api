@@ -4,8 +4,8 @@ import { EntityRepository, Repository } from 'typeorm';
 import { Account } from './account.entity';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { BadRequestException, ConflictException, HttpStatus, InternalServerErrorException, Res, UnauthorizedException } from '@nestjs/common';
-import { AccountPasswordDto } from './dto/account-password.dto';
-import { AccountPassword } from './account-password.entity';
+import { AccountPasswordDto } from './dto/account_password.dto';
+import { AccountPassword } from './account_password.entity';
 
 @EntityRepository(Account)
 export class AccountRepository extends Repository<Account>

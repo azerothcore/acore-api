@@ -1,11 +1,11 @@
 import * as crypto from 'crypto';
 import { EntityRepository, MoreThan, Repository } from 'typeorm';
-import { AccountPassword } from './account-password.entity';
+import { AccountPassword } from './account_password.entity';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { BadRequestException, InternalServerErrorException, NotFoundException, Req, Res } from '@nestjs/common';
 import { Account } from './account.entity';
 import { Email } from '../shared/email';
-import { AccountPasswordDto } from './dto/account-password.dto';
+import { AccountPasswordDto } from './dto/account_password.dto';
 
 @EntityRepository(AccountPassword)
 export class AccountPasswordRepository extends Repository<AccountPassword>

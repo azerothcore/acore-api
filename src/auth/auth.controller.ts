@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { AuthGuard } from '../shared/auth.guard';
 import { Account } from './account.decorator';
-import { AccountPasswordDto } from './dto/account-password.dto';
+import { AccountPasswordDto } from './dto/account_password.dto';
 
 @Controller('auth')
 export class AuthController

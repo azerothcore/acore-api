@@ -2,8 +2,8 @@ import { Injectable, Req, Res } from '@nestjs/common';
 import { AccountRepository } from './account.repository';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
-import { AccountPasswordRepository } from './account-password.repository';
-import { AccountPasswordDto } from './dto/account-password.dto';
+import { AccountPasswordRepository } from './account_password.repository';
+import { AccountPasswordDto } from './dto/account_password.dto';
 import { Account } from './account.decorator';
 
 @Injectable()
