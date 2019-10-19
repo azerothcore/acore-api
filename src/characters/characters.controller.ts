@@ -20,15 +20,15 @@ export class CharactersController
             .leftJoinAndSelect(GuildMember, 'gm', 'gm.guid = characters.guid')
             .leftJoinAndSelect(Guild, 'g', 'g.guildid = gm.guildid')
             .where('online = 1')
-            .select(['characters.guid',
-                     'characters.name',
-                     'characters.race',
-                     'characters.class',
-                     'characters.gender',
-                     'characters.level',
-                     'characters.map',
-                     'characters.instance_id',
-                     'characters.zone',
+            .select(['characters.guid as guid',
+                     'characters.name as name',
+                     'characters.race as race',
+                     'characters.class as class',
+                     'characters.gender as gender',
+                     'characters.level as level',
+                     'characters.map as map',
+                     'characters.instance_id as instance_id',
+                     'characters.zone as zone',
                      'gm.guildid as guildId',
                      'g.name as guildName'])
             .getRawMany();
