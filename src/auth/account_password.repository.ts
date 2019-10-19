@@ -1,18 +1,18 @@
 import * as crypto from 'crypto';
 import { EntityRepository, MoreThan, Repository } from 'typeorm';
-import { AccountPassword } from './account-password.entity';
-import { AuthCredentialsDto } from './dto/auth-credentials.dto';
+import { AccountPassword } from './account_password.entity';
+import { AccountDto } from './dto/account.dto';
 import { BadRequestException, InternalServerErrorException, NotFoundException, Req, Res } from '@nestjs/common';
 import { Account } from './account.entity';
 import { Email } from '../shared/email';
-import { AccountPasswordDto } from './dto/account-password.dto';
+import { AccountPasswordDto } from './dto/account_password.dto';
 
 @EntityRepository(AccountPassword)
 export class AccountPasswordRepository extends Repository<AccountPassword>
 {
-    async forgotPassword(authCredentialsDto: AuthCredentialsDto, @Req() req, @Res() res): Promise<void>
+    async forgotPassword(accountDto: AccountDto, @Req() req, @Res() res): Promise<void>
     {
-        const account = await Account.findOne({ reg_mail: authCredentialsDto.email });
+        const account = await Account.findOne({ reg_mail: accountDto.email });
 
         if (!account)
             throw new NotFoundException('There is no account with email address');

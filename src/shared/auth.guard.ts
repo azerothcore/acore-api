@@ -2,7 +2,7 @@ import { promisify } from 'util';
 import { CanActivate, ExecutionContext, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import { Account } from '../auth/account.entity';
-import { AccountPassword } from '../auth/account-password.entity';
+import { AccountPassword } from '../auth/account_password.entity';
 
 @Injectable()
 export class AuthGuard implements CanActivate

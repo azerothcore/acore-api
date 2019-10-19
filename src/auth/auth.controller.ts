@@ -1,11 +1,12 @@
 import { Body, Controller, Param, Patch, Post, Req, Res, UseGuards, ValidationPipe, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthCredentialsDto } from './dto/auth-credentials.dto';
+import { AccountDto } from './dto/account.dto';
 import { AuthGuard } from '../shared/auth.guard';
 import { Account } from './account.decorator';
-import { AccountPasswordDto } from './dto/account-password.dto';
 import { getConnection } from 'typeorm';
 import { Account as AccountEntity } from './account.entity';
+import { AccountPasswordDto } from './dto/account_password.dto';
+import { EmailDto } from './dto/email.dto';
 
 @Controller('auth')
 export class AuthController
@@ -13,15 +14,15 @@ export class AuthController
     constructor(private readonly authService: AuthService) {}
 
     @Post('/signup')
-    async signUp(@Body(ValidationPipe) authCredentialsDto: AuthCredentialsDto, @Res() res): Promise<void>
+    async signUp(@Body(ValidationPipe) accountDto: AccountDto, @Res() res): Promise<void>
     {
-        return this.authService.signUp(authCredentialsDto, res);
+        return this.authService.signUp(accountDto, res);
     }
 
     @Post('/signin')
-    async signIn(@Body() authCredentialsDto: AuthCredentialsDto, @Res() res): Promise<void>
+    async signIn(@Body() accountDto: AccountDto, @Res() res): Promise<void>
     {
-        return this.authService.signIn(authCredentialsDto, res);
+        return this.authService.signIn(accountDto, res);
     }
 
     @Patch('/updateMyPassword')
@@ -31,10 +32,17 @@ export class AuthController
         return this.authService.updatePassword(accountPasswordDto, res, accountID);
     }
 
-    @Post('/forgotPassword')
-    async forgotPassword(@Body() authCredentialsDto: AuthCredentialsDto, @Req() req, @Res() res): Promise<void>
+    @Patch('/updateMyEmail')
+    @UseGuards(new AuthGuard())
+    async updateEmail(@Body(ValidationPipe) emailDto: EmailDto, @Res() res, @Account('id') accountID)
     {
-        return this.authService.forgotPassword(authCredentialsDto, req, res);
+        return this.authService.updateEmail(emailDto, res, accountID);
+    }
+
+    @Post('/forgotPassword')
+    async forgotPassword(@Body() accountDto: AccountDto, @Req() req, @Res() res): Promise<void>
+    {
+        return this.authService.forgotPassword(accountDto, req, res);
     }
 
     @Patch('/resetPassword/:token')
