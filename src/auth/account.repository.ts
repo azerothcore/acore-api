@@ -2,7 +2,7 @@ import * as crypto from 'crypto';
 import * as jwt from 'jsonwebtoken';
 import { EntityRepository, Repository } from 'typeorm';
 import { Account } from './account.entity';
-import { AuthCredentialsDto } from './dto/auth-credentials.dto';
+import { AccountDto } from './dto/account.dto';
 import { BadRequestException, ConflictException, HttpStatus, InternalServerErrorException, Res, UnauthorizedException } from '@nestjs/common';
 import { AccountPasswordDto } from './dto/account_password.dto';
 import { AccountPassword } from './account_password.entity';
@@ -10,9 +10,9 @@ import { AccountPassword } from './account_password.entity';
 @EntityRepository(Account)
 export class AccountRepository extends Repository<Account>
 {
-    async signUp(authCredentialsDto: AuthCredentialsDto, @Res() res): Promise<void>
+    async signUp(accountDto: AccountDto, @Res() res): Promise<void>
     {
-        const { username, password, email, passwordConfirm } = authCredentialsDto;
+        const { username, password, email, passwordConfirm } = accountDto;
         const account = this.create();
         const emailExists = await this.findOne({ reg_mail: email });
 
@@ -40,9 +40,9 @@ export class AccountRepository extends Repository<Account>
         }
     }
 
-    async signIn(authCredentialsDto: AuthCredentialsDto, @Res() res): Promise<void>
+    async signIn(accountDto: AccountDto, @Res() res): Promise<void>
     {
-        const { username, password } = authCredentialsDto;
+        const { username, password } = accountDto;
         const account = await this.findOne({ where: { username } });
 
         if (!account || (await AccountRepository.hashPassword(username, password)) !== account.sha_pass_hash)
