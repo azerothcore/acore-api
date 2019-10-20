@@ -3,7 +3,7 @@ import * as jwt from 'jsonwebtoken';
 import { EntityRepository, Repository } from 'typeorm';
 import { Account } from './account.entity';
 import { AccountDto } from './dto/account.dto';
-import { BadRequestException, ConflictException, HttpStatus, InternalServerErrorException, Res, UnauthorizedException, } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpStatus, InternalServerErrorException, Res, UnauthorizedException } from '@nestjs/common';
 import { AccountPasswordDto } from './dto/account_password.dto';
 import { AccountPassword } from './account_password.entity';
 import { EmailDto } from './dto/email.dto';
@@ -57,7 +57,7 @@ export class AccountRepository extends Repository<Account>
         const { passwordCurrent, password, passwordConfirm } = accountPasswordDto;
         const account = await this.findOne({ where: { id: accountID } });
 
-        if (!account || (await AccountRepository.hashPassword(account.username, passwordCurrent)) !== account.sha_pass_hash)
+        if ((await AccountRepository.hashPassword(account.username, passwordCurrent)) !== account.sha_pass_hash)
             throw new UnauthorizedException('Your current password is wrong!');
 
         if (passwordConfirm !== password)
@@ -87,7 +87,7 @@ export class AccountRepository extends Repository<Account>
         if (emailConfirm.toUpperCase() !== email.toUpperCase())
             throw new BadRequestException('Email does not match');
 
-        if (!account || (await AccountRepository.hashPassword(account.username, password)) !== account.sha_pass_hash)
+        if ((await AccountRepository.hashPassword(account.username, password)) !== account.sha_pass_hash)
             throw new UnauthorizedException('Your current password is wrong!');
 
         account.reg_mail = email.toUpperCase();

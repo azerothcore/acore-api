@@ -45,10 +45,11 @@ export class AuthGuard implements CanActivate
         }
 
         const accountExists = await Account.findOne({ where: { id: this.decoded.id } });
-        accountExists.sha_pass_hash = undefined;
 
         if (!accountExists)
             throw new UnauthorizedException('The account belonging to this token does no longer exist.');
+
+        accountExists.sha_pass_hash = undefined;
 
         const accountPassword = await AccountPassword.findOne({ where: { id: this.decoded.id } });
 
