@@ -101,9 +101,15 @@ export class AccountRepository extends Repository<Account>
         return crypto.createHash('sha1').update(`${username.toUpperCase()}:${password}`.toUpperCase()).digest('hex').toUpperCase();
     }
 
-    private static createToken(account: any, statusCode: number, res: any): void
+    private static createToken(account: any, statusCode: number, res): void
     {
         const token = jwt.sign({ id: account.id }, process.env.JWT_SECRET_KEY, { expiresIn: process.env.JWT_EXPIRES_IN });
+
+        res.cookie('jwt', token,
+        {
+            expires: new Date(Date.now() + +process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000),
+            httpOnly: true
+        });
 
         account.sha_pass_hash = undefined;
         account.v = undefined;
