@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Patch, Post, Req, Res, UseGuards, ValidationPipe, Get } from '@nestjs/common';
+import { Body, Controller, Param, Patch, Post, Req, Res, UseGuards, ValidationPipe, Get, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AccountDto } from './dto/account.dto';
 import { AuthGuard } from '../shared/auth.guard';
@@ -23,6 +23,13 @@ export class AuthController
     async signIn(@Body() accountDto: AccountDto, @Res() res): Promise<void>
     {
         return this.authService.signIn(accountDto, res);
+    }
+
+    @Get('/logout')
+    logout(@Res() res)
+    {
+        res.cookie('jwt', 'logout', { expires: new Date(Date.now() + 10), httpOnly: true });
+        res.status(HttpStatus.OK).json({ status: 'success' });
     }
 
     @Patch('/updateMyPassword')
