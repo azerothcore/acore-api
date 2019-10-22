@@ -6,13 +6,16 @@ import { AccountPasswordRepository } from './account_password.repository';
 import { AccountPasswordDto } from './dto/account_password.dto';
 import { Account } from './account.decorator';
 import { EmailDto } from './dto/email.dto';
+import { RemoteRepository } from './remote.repository';
+import { RemoteDto } from './dto/remote.dto';
 
 @Injectable()
 export class AuthService
 {
     constructor(
         @InjectRepository(AccountRepository) private readonly accountRepository: AccountRepository,
-        @InjectRepository(AccountPasswordRepository) private readonly accountPasswordRepository: AccountPasswordRepository
+        @InjectRepository(AccountPasswordRepository) private readonly accountPasswordRepository: AccountPasswordRepository,
+        @InjectRepository(RemoteRepository) private readonly remoteRepository: RemoteRepository
     ) {}
 
     async signUp(accountDto: AccountDto, @Res() res): Promise<void>
@@ -43,5 +46,25 @@ export class AuthService
     async resetPassword(accountPasswordDto: AccountPasswordDto, @Res() res, token: string): Promise<void>
     {
         return this.accountPasswordRepository.resetPassword(accountPasswordDto, res, token);
+    }
+
+    async rename(remoteDto: RemoteDto, @Account() accountID: number)
+    {
+        return this.remoteRepository.createRemote(remoteDto, accountID, 1, 'Renamed');
+    }
+
+    async customize(remoteDto: RemoteDto, @Account() accountID: number)
+    {
+        return this.remoteRepository.createRemote(remoteDto, accountID, 2, 'Customize');
+    }
+
+    async changeFaction(remoteDto: RemoteDto, @Account() accountID: number)
+    {
+        return this.remoteRepository.createRemote(remoteDto, accountID, 3, 'Change Faction');
+    }
+
+    async changeRace(remoteDto: RemoteDto, @Account() accountID: number)
+    {
+        return this.remoteRepository.createRemote(remoteDto, accountID, 4, 'Change Race');
     }
 }
