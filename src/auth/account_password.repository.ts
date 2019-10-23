@@ -6,11 +6,12 @@ import { BadRequestException, InternalServerErrorException, NotFoundException, R
 import { Account } from './account.entity';
 import { Email } from '../shared/email';
 import { AccountPasswordDto } from './dto/account_password.dto';
+import { Request } from 'express';
 
 @EntityRepository(AccountPassword)
 export class AccountPasswordRepository extends Repository<AccountPassword>
 {
-    async forgotPassword(accountDto: AccountDto, @Req() req, @Res() res): Promise<void>
+    async forgotPassword(accountDto: AccountDto, request: Request)
     {
         const account = await Account.findOne({ reg_mail: accountDto.email });
 
@@ -29,9 +30,9 @@ export class AccountPasswordRepository extends Repository<AccountPassword>
 
         try
         {
-            const resetURL = `${req.protocol}://${req.get('host')}/auth/resetPassword/${resetToken}`;
+            const resetURL = `${request.protocol}://${request.get('host')}/auth/resetPassword/${resetToken}`;
             await new Email(account, resetURL).sendPasswordReset();
-            res.status(200).json({ status: 'success', message: 'Token sent to email' });
+            return { status: 'success', message: 'Token sent to email' };
         }
         catch (error)
         {
@@ -42,7 +43,7 @@ export class AccountPasswordRepository extends Repository<AccountPassword>
         }
     }
 
-    async resetPassword(accountPasswordDto: AccountPasswordDto, @Res() res, token: string): Promise<void>
+    async resetPassword(accountPasswordDto: AccountPasswordDto, token: string)
     {
         const { password, passwordConfirm } = accountPasswordDto;
         const hashedToken: string = crypto.createHash('sha256').update(token).digest('hex');
@@ -66,6 +67,6 @@ export class AccountPasswordRepository extends Repository<AccountPassword>
         accountPassword.password_reset_token = null;
         await accountPassword.save();
 
-        res.status(200).json({ status: 'success', message: 'Your password has been reset successfully!' });
+        return { status: 'success', message: 'Your password has been reset successfully!' };
     }
 }

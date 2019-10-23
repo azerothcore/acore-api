@@ -1,13 +1,13 @@
-import { Injectable, Req, Res } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { AccountRepository } from './account.repository';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AccountDto } from './dto/account.dto';
 import { AccountPasswordRepository } from './account_password.repository';
 import { AccountPasswordDto } from './dto/account_password.dto';
-import { Account } from './account.decorator';
 import { EmailDto } from './dto/email.dto';
 import { RemoteRepository } from './remote.repository';
 import { RemoteDto } from './dto/remote.dto';
+import { Request, Response } from 'express';
 
 @Injectable()
 export class AuthService
@@ -18,52 +18,52 @@ export class AuthService
         @InjectRepository(RemoteRepository) private readonly remoteRepository: RemoteRepository
     ) {}
 
-    async signUp(accountDto: AccountDto, @Res() res): Promise<void>
+    async signUp(accountDto: AccountDto, response: Response)
     {
-        return this.accountRepository.signUp(accountDto, res);
+        return this.accountRepository.signUp(accountDto, response);
     }
 
-    async signIn(accountDto: AccountDto, @Res() res): Promise<void>
+    async signIn(accountDto: AccountDto, response: Response)
     {
-        return this.accountRepository.signIn(accountDto, res);
+        return this.accountRepository.signIn(accountDto, response);
     }
 
-    async updatePassword(accountPasswordDto: AccountPasswordDto, @Res() res, @Account() accountID)
+    async updatePassword(accountPasswordDto: AccountPasswordDto, response: Response, accountID: number)
     {
-        return this.accountRepository.updatePassword(accountPasswordDto, res, accountID);
+        return this.accountRepository.updatePassword(accountPasswordDto, response, accountID);
     }
 
-    async updateEmail(emailDto: EmailDto, @Res() res, @Account() accountID)
+    async updateEmail(emailDto: EmailDto, accountID: number)
     {
-        return this.accountRepository.updateEmail(emailDto, res, accountID);
+        return this.accountRepository.updateEmail(emailDto, accountID);
     }
 
-    async forgotPassword(accountDto: AccountDto, @Req() req, @Res() res): Promise<void>
+    async forgotPassword(accountDto: AccountDto, request: Request)
     {
-        return this.accountPasswordRepository.forgotPassword(accountDto, req, res);
+        return this.accountPasswordRepository.forgotPassword(accountDto, request);
     }
 
-    async resetPassword(accountPasswordDto: AccountPasswordDto, @Res() res, token: string): Promise<void>
+    async resetPassword(accountPasswordDto: AccountPasswordDto, token: string)
     {
-        return this.accountPasswordRepository.resetPassword(accountPasswordDto, res, token);
+        return this.accountPasswordRepository.resetPassword(accountPasswordDto, token);
     }
 
-    async rename(remoteDto: RemoteDto, @Account() accountID: number)
+    async rename(remoteDto: RemoteDto, accountID: number)
     {
         return this.remoteRepository.createRemote(remoteDto, accountID, 1, 'Renamed');
     }
 
-    async customize(remoteDto: RemoteDto, @Account() accountID: number)
+    async customize(remoteDto: RemoteDto, accountID: number)
     {
         return this.remoteRepository.createRemote(remoteDto, accountID, 2, 'Customize');
     }
 
-    async changeFaction(remoteDto: RemoteDto, @Account() accountID: number)
+    async changeFaction(remoteDto: RemoteDto, accountID: number)
     {
         return this.remoteRepository.createRemote(remoteDto, accountID, 3, 'Change Faction');
     }
 
-    async changeRace(remoteDto: RemoteDto, @Account() accountID: number)
+    async changeRace(remoteDto: RemoteDto, accountID: number)
     {
         return this.remoteRepository.createRemote(remoteDto, accountID, 4, 'Change Race');
     }

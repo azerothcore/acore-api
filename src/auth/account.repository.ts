@@ -3,15 +3,16 @@ import * as jwt from 'jsonwebtoken';
 import { EntityRepository, Repository } from 'typeorm';
 import { Account } from './account.entity';
 import { AccountDto } from './dto/account.dto';
-import { BadRequestException, ConflictException, HttpStatus, InternalServerErrorException, Res, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpStatus, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { AccountPasswordDto } from './dto/account_password.dto';
 import { AccountPassword } from './account_password.entity';
 import { EmailDto } from './dto/email.dto';
+import { Response } from 'express';
 
 @EntityRepository(Account)
 export class AccountRepository extends Repository<Account>
 {
-    async signUp(accountDto: AccountDto, @Res() res): Promise<void>
+    async signUp(accountDto: AccountDto, response: Response)
     {
         const { username, password, email, passwordConfirm } = accountDto;
         const account = this.create();
@@ -30,7 +31,7 @@ export class AccountRepository extends Repository<Account>
         try
         {
             await account.save();
-            AccountRepository.createToken(account, HttpStatus.CREATED, res);
+            AccountRepository.createToken(account, HttpStatus.CREATED, response);
         }
         catch (error)
         {
@@ -41,18 +42,18 @@ export class AccountRepository extends Repository<Account>
         }
     }
 
-    async signIn(accountDto: AccountDto, @Res() res): Promise<void>
+    async signIn(accountDto: AccountDto, response: Response)
     {
-        const { username, password } = accountDto;
+        const { username, password }: { username: string, password: string } = accountDto;
         const account = await this.findOne({ where: { username } });
 
         if (!account || (await AccountRepository.hashPassword(username, password)) !== account.sha_pass_hash)
             throw new UnauthorizedException('Incorrect username or password');
 
-        AccountRepository.createToken(account, HttpStatus.OK, res);
+        AccountRepository.createToken(account, HttpStatus.OK, response);
     }
 
-    async updatePassword(accountPasswordDto: AccountPasswordDto, @Res() res, accountID)
+    async updatePassword(accountPasswordDto: AccountPasswordDto, response: Response, accountID: number)
     {
         const { passwordCurrent, password, passwordConfirm } = accountPasswordDto;
         const account = await this.findOne({ where: { id: accountID } });
@@ -73,10 +74,10 @@ export class AccountRepository extends Repository<Account>
         accountPassword.password_changed_at = new Date(Date.now() - 1000);
         await accountPassword.save();
 
-        AccountRepository.createToken(account, HttpStatus.OK, res);
+        AccountRepository.createToken(account, HttpStatus.OK, response);
     }
 
-    async updateEmail(emailDto: EmailDto, @Res() res, accountID)
+    async updateEmail(emailDto: EmailDto, accountID: number)
     {
         const { password, emailCurrent, email, emailConfirm } = emailDto;
         const account = await this.findOne({ where: { id: accountID } });
@@ -87,13 +88,16 @@ export class AccountRepository extends Repository<Account>
         if (emailConfirm.toUpperCase() !== email.toUpperCase())
             throw new BadRequestException('Email does not match');
 
+        if (email.toUpperCase() === account.reg_mail)
+            throw new ConflictException('That email address already exists');
+
         if ((await AccountRepository.hashPassword(account.username, password)) !== account.sha_pass_hash)
             throw new UnauthorizedException('Your current password is wrong!');
 
         account.reg_mail = email.toUpperCase();
         await account.save();
 
-        res.status(HttpStatus.OK).json({ status: 'success', message: 'Your email has been changed successfully!' });
+        return { status: 'success', message: 'Your email has been changed successfully!' };
     }
 
     private static async hashPassword(username: string, password: string): Promise<string>
@@ -101,11 +105,11 @@ export class AccountRepository extends Repository<Account>
         return crypto.createHash('sha1').update(`${username.toUpperCase()}:${password}`.toUpperCase()).digest('hex').toUpperCase();
     }
 
-    private static createToken(account: any, statusCode: number, res): void
+    private static createToken(account: any, statusCode: number, response: Response)
     {
         const token = jwt.sign({ id: account.id }, process.env.JWT_SECRET_KEY, { expiresIn: process.env.JWT_EXPIRES_IN });
 
-        res.cookie('jwt', token,
+        response.cookie('jwt', token,
         {
             expires: new Date(Date.now() + +process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000),
             httpOnly: true
@@ -115,6 +119,6 @@ export class AccountRepository extends Repository<Account>
         account.v = undefined;
         account.s = undefined;
 
-        res.status(statusCode).json({ status: 'success', token, data: { account } });
+        response.status(statusCode).json({ status: 'success', token, account });
     }
 }

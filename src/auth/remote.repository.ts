@@ -1,14 +1,13 @@
 import { EntityRepository, getConnection, Repository } from 'typeorm';
 import { Remote } from './remote.entity';
 import { Characters } from '../characters/characters.entity';
-import { Account } from './account.decorator';
 import { NotFoundException } from '@nestjs/common';
 import { RemoteDto } from './dto/remote.dto';
 
 @EntityRepository(Remote)
 export class RemoteRepository extends Repository<Remote>
 {
-    async createRemote(remoteDto: RemoteDto, @Account() accountID: number, type: number, message: string)
+    async createRemote(remoteDto: RemoteDto, accountID: number, type: number, message: string)
     {
         const characters =  await RemoteRepository.getCharactersList(accountID);
 
