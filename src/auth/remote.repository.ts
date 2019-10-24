@@ -14,7 +14,7 @@ export class RemoteRepository extends Repository<Remote>
         if (characters.length === 0)
             throw new NotFoundException('Character not found');
 
-        const Guid = characters.map(character => character.guid).find(guid => guid === remoteDto.guid);
+        const Guid = characters.map(character => character.guid).find(guid => guid == remoteDto.guid);
 
         if (!Guid)
             throw new NotFoundException('Account with that character not found');
