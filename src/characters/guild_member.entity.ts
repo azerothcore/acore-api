@@ -1,4 +1,4 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn, ManyToOne, OneToOne } from 'typeorm';
+import { BaseEntity, Column, Entity, PrimaryGeneratedColumn, ManyToOne, OneToOne, PrimaryColumn } from 'typeorm';
 
 @Entity({ synchronize: false })
 export class GuildMember extends BaseEntity
@@ -6,7 +6,7 @@ export class GuildMember extends BaseEntity
     @Column()
     guildid: number;
 
-    @PrimaryGeneratedColumn()
+    @PrimaryColumn()
     guid: number;
 
     @Column()
