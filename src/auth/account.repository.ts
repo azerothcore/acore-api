@@ -12,7 +12,7 @@ import { Response } from 'express';
 @EntityRepository(Account)
 export class AccountRepository extends Repository<Account>
 {
-    async signUp(accountDto: AccountDto, response: Response)
+    async signUp(accountDto: AccountDto, response: Response): Promise<void>
     {
         const { username, password, email, passwordConfirm } = accountDto;
         const account = this.create();
@@ -42,7 +42,7 @@ export class AccountRepository extends Repository<Account>
         }
     }
 
-    async signIn(accountDto: AccountDto, response: Response)
+    async signIn(accountDto: AccountDto, response: Response): Promise<void>
     {
         const { username, password }: { username: string, password: string } = accountDto;
         const account = await this.findOne({ where: { username } });
@@ -53,7 +53,7 @@ export class AccountRepository extends Repository<Account>
         AccountRepository.createToken(account, HttpStatus.OK, response);
     }
 
-    async updatePassword(accountPasswordDto: AccountPasswordDto, response: Response, accountID: number)
+    async updatePassword(accountPasswordDto: AccountPasswordDto, response: Response, accountID: number): Promise<void>
     {
         const { passwordCurrent, password, passwordConfirm } = accountPasswordDto;
         const account = await this.findOne({ where: { id: accountID } });
@@ -77,7 +77,7 @@ export class AccountRepository extends Repository<Account>
         AccountRepository.createToken(account, HttpStatus.OK, response);
     }
 
-    async updateEmail(emailDto: EmailDto, accountID: number)
+    async updateEmail(emailDto: EmailDto, accountID: number): Promise<object>
     {
         const { password, emailCurrent, email, emailConfirm } = emailDto;
         const account = await this.findOne({ where: { id: accountID } });
@@ -105,7 +105,7 @@ export class AccountRepository extends Repository<Account>
         return crypto.createHash('sha1').update(`${username.toUpperCase()}:${password}`.toUpperCase()).digest('hex').toUpperCase();
     }
 
-    private static createToken(account: any, statusCode: number, response: Response)
+    private static createToken(account: any, statusCode: number, response: Response): void
     {
         const token = jwt.sign({ id: account.id }, process.env.JWT_SECRET_KEY, { expiresIn: process.env.JWT_EXPIRES_IN });
 

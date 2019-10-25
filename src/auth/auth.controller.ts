@@ -16,19 +16,19 @@ export class AuthController
     constructor(private readonly authService: AuthService) {}
 
     @Post('/signup')
-    async signUp(@Body(ValidationPipe) accountDto: AccountDto, @Res() response: Response)
+    async signUp(@Body(ValidationPipe) accountDto: AccountDto, @Res() response: Response): Promise<void>
     {
         return this.authService.signUp(accountDto, response);
     }
 
     @Post('/signin')
-    async signIn(@Body() accountDto: AccountDto, @Res() response: Response)
+    async signIn(@Body() accountDto: AccountDto, @Res() response: Response): Promise<void>
     {
         return this.authService.signIn(accountDto, response);
     }
 
     @Get('/logout')
-    logout(@Res() response: Response)
+    logout(@Res() response: Response): void
     {
         response.cookie('jwt', 'logout', { expires: new Date(Date.now() + 10), httpOnly: true });
         response.status(HttpStatus.OK).json({ status: 'success' });
@@ -36,56 +36,66 @@ export class AuthController
 
     @Patch('/updateMyPassword')
     @UseGuards(new AuthGuard())
-    async updatePassword(@Body(ValidationPipe) accountPasswordDto: AccountPasswordDto, @Res() response: Response, @Account('id') accountID: number)
+    async updatePassword(
+        @Body(ValidationPipe) accountPasswordDto: AccountPasswordDto,
+        @Res() response: Response,
+        @Account('id') accountID: number): Promise<void>
     {
         return this.authService.updatePassword(accountPasswordDto, response, accountID);
     }
 
     @Patch('/updateMyEmail')
     @UseGuards(new AuthGuard())
-    async updateEmail(@Body(ValidationPipe) emailDto: EmailDto, @Account('id') accountID: number)
+    async updateEmail(@Body(ValidationPipe) emailDto: EmailDto, @Account('id') accountID: number): Promise<object>
     {
         return this.authService.updateEmail(emailDto, accountID);
     }
 
     @Post('/forgotPassword')
-    async forgotPassword(@Body() accountDto: AccountDto, @Req() request: Request)
+    async forgotPassword(@Body() accountDto: AccountDto, @Req() request: Request): Promise<object>
     {
         return this.authService.forgotPassword(accountDto, request);
     }
 
     @Patch('/resetPassword/:token')
-    async resetPassword(@Body(ValidationPipe) accountPasswordDto: AccountPasswordDto, @Param('token') token: string)
+    async resetPassword(@Body(ValidationPipe) accountPasswordDto: AccountPasswordDto, @Param('token') token: string): Promise<object>
     {
         return this.authService.resetPassword(accountPasswordDto, token);
     }
 
     @Post('/rename')
     @UseGuards(new AuthGuard())
-    async rename(@Body() remoteDto: RemoteDto, @Account('id') accountID: number)
+    async rename(@Body() remoteDto: RemoteDto, @Account('id') accountID: number): Promise<object>
     {
         return this.authService.rename(remoteDto, accountID);
     }
 
     @Post('/customize')
     @UseGuards(new AuthGuard())
-    async customize(@Body() remoteDto: RemoteDto, @Account('id') accountID: number)
+    async customize(@Body() remoteDto: RemoteDto, @Account('id') accountID: number): Promise<object>
     {
         return this.authService.customize(remoteDto, accountID);
     }
 
     @Post('/changeFaction')
     @UseGuards(new AuthGuard())
-    async changeFaction(@Body() remoteDto: RemoteDto, @Account('id') accountID: number)
+    async changeFaction(@Body() remoteDto: RemoteDto, @Account('id') accountID: number): Promise<object>
     {
         return this.authService.changeFaction(remoteDto, accountID);
     }
 
     @Post('/changeRace')
     @UseGuards(new AuthGuard())
-    async changeRace(@Body() remoteDto: RemoteDto, @Account('id') accountID: number)
+    async changeRace(@Body() remoteDto: RemoteDto, @Account('id') accountID: number): Promise<object>
     {
         return this.authService.changeRace(remoteDto, accountID);
+    }
+
+    @Post('/boost')
+    @UseGuards(new AuthGuard())
+    async boost(@Body() remoteDto: RemoteDto, @Account('id') accountID: number): Promise<object>
+    {
+        return this.authService.boost(remoteDto, accountID);
     }
 
     @Get('/pulse/:days')

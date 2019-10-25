@@ -11,7 +11,7 @@ import { Request } from 'express';
 @EntityRepository(AccountPassword)
 export class AccountPasswordRepository extends Repository<AccountPassword>
 {
-    async forgotPassword(accountDto: AccountDto, request: Request)
+    async forgotPassword(accountDto: AccountDto, request: Request): Promise<object>
     {
         const account = await Account.findOne({ reg_mail: accountDto.email });
 
@@ -43,7 +43,7 @@ export class AccountPasswordRepository extends Repository<AccountPassword>
         }
     }
 
-    async resetPassword(accountPasswordDto: AccountPasswordDto, token: string)
+    async resetPassword(accountPasswordDto: AccountPasswordDto, token: string): Promise<object>
     {
         const { password, passwordConfirm } = accountPasswordDto;
         const hashedToken: string = crypto.createHash('sha256').update(token).digest('hex');
