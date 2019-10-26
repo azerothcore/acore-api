@@ -1,4 +1,3 @@
-import { promisify } from 'util';
 import { CanActivate, ExecutionContext, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import { Account } from '../auth/account.entity';
@@ -29,7 +28,7 @@ export class AuthGuard implements CanActivate
 
         try
         {
-            this.decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET_KEY);
+            this.decoded = await jwt.verify(token, process.env.JWT_SECRET_KEY);
         }
         catch (error)
         {
