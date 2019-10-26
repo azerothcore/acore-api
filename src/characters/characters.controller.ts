@@ -89,7 +89,7 @@ export class CharactersController
                     END)
                 )`)
             .select(['arena_team_member.*',
-                     'c.name AS Name',
+                     'c.name AS name',
                      'c.class AS class',
                      'c.race AS race',
                      'c.gender AS gender',
