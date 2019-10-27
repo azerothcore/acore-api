@@ -10,7 +10,8 @@ export enum Type
     CUSTOMIZE = 2,
     CHANGE_FACTION = 3,
     CHANGE_RACE = 4,
-    BOOST = 5
+    BOOST = 5,
+    PROFESSION = 6
 }
 
 @EntityRepository(Remote)
@@ -31,6 +32,7 @@ export class RemoteRepository extends Repository<Remote>
         const remote = this.create();
         remote.guid = Guid;
         remote.type = type;
+        remote.profession = type === Type.PROFESSION ? remoteDto.profession : 0;
         await remote.save();
 
         return { status: 'success', message };

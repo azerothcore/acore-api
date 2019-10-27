@@ -12,4 +12,7 @@ export class Remote extends BaseEntity
 
     @Column('int')
     type: number;
+
+    @Column('int')
+    profession: number;
 }

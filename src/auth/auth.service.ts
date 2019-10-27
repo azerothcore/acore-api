@@ -72,4 +72,9 @@ export class AuthService
     {
         return this.remoteRepository.createRemote(remoteDto, accountID, Type.BOOST, 'Boost');
     }
+
+    async profession(remoteDto: RemoteDto, accountID: number): Promise<object>
+    {
+        return this.remoteRepository.createRemote(remoteDto, accountID, Type.PROFESSION, 'Profession');
+    }
 }

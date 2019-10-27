@@ -98,6 +98,13 @@ export class AuthController
         return this.authService.boost(remoteDto, accountID);
     }
 
+    @Post('/profession')
+    @UseGuards(new AuthGuard())
+    async profession(@Body() remoteDto: RemoteDto, @Account('id') accountID: number): Promise<object>
+    {
+        return this.authService.profession(remoteDto, accountID);
+    }
+
     @Get('/pulse/:days')
     async pulse(@Param('days') days: number)
     {
