@@ -17,7 +17,7 @@ export enum Type
 @EntityRepository(Remote)
 export class RemoteRepository extends Repository<Remote>
 {
-    async createRemote(remoteDto: RemoteDto, accountID: number, type: Type, message: string): Promise<object>
+    async createRemote(remoteDto: RemoteDto, accountID: number, type: Type): Promise<object>
     {
         const characters =  await RemoteRepository.getGuid(accountID);
 
@@ -35,7 +35,7 @@ export class RemoteRepository extends Repository<Remote>
         remote.profession = type === Type.PROFESSION ? remoteDto.profession : 0;
         await remote.save();
 
-        return { status: 'success', message };
+        return { status: 'success' };
     }
 
     private static async getGuid(accountID: number): Promise<any[]>

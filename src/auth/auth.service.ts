@@ -50,31 +50,31 @@ export class AuthService
 
     async rename(remoteDto: RemoteDto, accountID: number): Promise<object>
     {
-        return this.remoteRepository.createRemote(remoteDto, accountID, Type.RENAME, 'Renamed');
+        return this.remoteRepository.createRemote(remoteDto, accountID, Type.RENAME);
     }
 
     async customize(remoteDto: RemoteDto, accountID: number): Promise<object>
     {
-        return this.remoteRepository.createRemote(remoteDto, accountID, Type.CUSTOMIZE, 'Customize');
+        return this.remoteRepository.createRemote(remoteDto, accountID, Type.CUSTOMIZE);
     }
 
     async changeFaction(remoteDto: RemoteDto, accountID: number): Promise<object>
     {
-        return this.remoteRepository.createRemote(remoteDto, accountID, Type.CHANGE_FACTION, 'Change Faction');
+        return this.remoteRepository.createRemote(remoteDto, accountID, Type.CHANGE_FACTION);
     }
 
     async changeRace(remoteDto: RemoteDto, accountID: number): Promise<object>
     {
-        return this.remoteRepository.createRemote(remoteDto, accountID, Type.CHANGE_RACE, 'Change Race');
+        return this.remoteRepository.createRemote(remoteDto, accountID, Type.CHANGE_RACE);
     }
 
     async boost(remoteDto: RemoteDto, accountID: number): Promise<object>
     {
-        return this.remoteRepository.createRemote(remoteDto, accountID, Type.BOOST, 'Boost');
+        return this.remoteRepository.createRemote(remoteDto, accountID, Type.BOOST);
     }
 
     async profession(remoteDto: RemoteDto, accountID: number): Promise<object>
     {
-        return this.remoteRepository.createRemote(remoteDto, accountID, Type.PROFESSION, 'Profession');
+        return this.remoteRepository.createRemote(remoteDto, accountID, Type.PROFESSION);
     }
 }

@@ -1,13 +1,13 @@
 import { BaseEntity, Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity()
+@Entity({ synchronize: false })
 export class Remote extends BaseEntity
 {
     @PrimaryGeneratedColumn({ unsigned: true })
     id: number;
 
     @Column('int')
-    @Index('Character GUID')
+    @Index('idx_guid')
     guid: number;
 
     @Column('int')
