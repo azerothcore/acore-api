@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Param, Query, UseGuards } from '@nestjs/common';
 import { CharactersService } from './characters.service';
 import { getConnection } from 'typeorm';
 import { Characters } from './characters.entity';
@@ -8,6 +8,9 @@ import { ArenaTeam } from './arena_team.entity';
 import { ArenaTeamMember } from './arena_team_member.entity';
 import { CharacterArenaStats } from './character_arena_stats.entity';
 import { Worldstates } from './worldstates.entity';
+import { RecoveryItem } from './recovery_item.entity';
+import { AuthGuard } from '../shared/auth.guard';
+import { Account } from '../auth/account.decorator';
 
 @Controller('characters')
 export class CharactersController
@@ -107,6 +110,40 @@ export class CharactersController
             .createQueryBuilder('worldstates')
             .select(['worldstates.*'])
             .where('worldstates.comment LIKE "%' + param.comment + '%"')
+            .getRawMany();
+    }
+
+    @Get('/recoveryItem/:guid')
+    @UseGuards(new AuthGuard())
+    async recoveryItem(@Param('guid') guid: number, @Account('id') accountID)
+    {
+        const characters = await this.getGuid(accountID);
+
+        if (characters.length === 0)
+            throw new NotFoundException('Character not found');
+
+        const Guid = characters.map((character): number => character.guid).find((charGuid: number): boolean => charGuid === +guid);
+
+        if (!Guid)
+            throw new NotFoundException('Account with that character not found');
+
+        const connection = getConnection('charactersConnection');
+        return await connection
+            .getRepository(RecoveryItem)
+            .createQueryBuilder('recovery_item')
+            .select(['recovery_item.*'])
+            .where(`recovery_item.Guid = ${guid}`)
+            .getRawMany();
+    }
+
+    async getGuid(accountID: number): Promise<any[]>
+    {
+        const connection = getConnection('charactersConnection');
+        return await connection
+            .getRepository(Characters)
+            .createQueryBuilder('characters')
+            .where(`account = ${accountID}`)
+            .select(['characters.guid as guid'])
             .getRawMany();
     }
 }

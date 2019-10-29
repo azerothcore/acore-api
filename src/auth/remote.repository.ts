@@ -1,8 +1,8 @@
-import { EntityRepository, getConnection, Repository } from 'typeorm';
+import { EntityRepository, Repository } from 'typeorm';
 import { Remote } from './remote.entity';
-import { Characters } from '../characters/characters.entity';
 import { NotFoundException } from '@nestjs/common';
 import { RemoteDto } from './dto/remote.dto';
+import { CharactersController } from '../characters/characters.controller';
 
 export enum Type
 {
@@ -19,7 +19,7 @@ export class RemoteRepository extends Repository<Remote>
 {
     async createRemote(remoteDto: RemoteDto, accountID: number, type: Type): Promise<object>
     {
-        const characters =  await RemoteRepository.getGuid(accountID);
+        const characters =  await new CharactersController(undefined).getGuid(accountID);
 
         if (characters.length === 0)
             throw new NotFoundException('Character not found');
@@ -36,16 +36,5 @@ export class RemoteRepository extends Repository<Remote>
         await remote.save();
 
         return { status: 'success' };
-    }
-
-    private static async getGuid(accountID: number): Promise<any[]>
-    {
-        const connection = getConnection('charactersConnection');
-        return await connection
-            .getRepository(Characters)
-            .createQueryBuilder('characters')
-            .where(`account = ${accountID}`)
-            .select(['characters.guid as guid'])
-            .getRawMany();
     }
 }
