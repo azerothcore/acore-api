@@ -4,7 +4,7 @@ import { BaseEntity, Column, Entity, PrimaryColumn } from 'typeorm';
 export class RecoveryItem extends BaseEntity
 {
     @Column()
-    Guild: number;
+    Guid: number;
 
     @PrimaryColumn()
     ItemEntry: number;
