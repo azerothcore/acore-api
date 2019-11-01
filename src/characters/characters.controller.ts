@@ -140,7 +140,7 @@ export class CharactersController
 
     @Post('/recoveryItem')
     @UseGuards(new AuthGuard())
-    async recoveryItem(@Body() recoveryItemDto: RecoveryItemDTO, @Account('id') accountID: number)
+    async recoveryItem(@Body() recoveryItemDto: RecoveryItemDTO, @Account('id') accountID: number): Promise<object>
     {
         const characters = await this.getGuid(accountID);
 
