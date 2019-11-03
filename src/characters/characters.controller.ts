@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, NotFoundException, Param, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, NotFoundException, Param, Query, UseGuards, BadRequestException } from '@nestjs/common';
 import { CharactersService } from './characters.service';
 import { getConnection } from 'typeorm';
 import { Characters } from './characters.entity';
@@ -13,6 +13,7 @@ import { AuthGuard } from '../shared/auth.guard';
 import { Account } from '../auth/account.decorator';
 import { RecoveryItemDTO } from './dto/recovery_item.dto';
 import { AzerothMail } from './azeroth_mail.entity';
+import { RecoveryHeroDTO } from './dto/recovery_hero.dto';
 
 @Controller('characters')
 export class CharactersController
@@ -115,6 +116,8 @@ export class CharactersController
             .getRawMany();
     }
 
+    // @TODO Refactor
+
     @Get('/recoveryItemList/:guid')
     @UseGuards(new AuthGuard())
     async recoveryItemList(@Param('guid') guid: number, @Account('id') accountID: number)
@@ -184,6 +187,54 @@ export class CharactersController
         return { status: 'success' };
     }
 
+    @Get('/recoveryHeroList/:accountId')
+    @UseGuards(new AuthGuard())
+    async recoveryHeroList(@Param('accountId') accountId: number, @Account('id') accountID: number)
+    {
+        if (+accountId !== accountID)
+            throw new BadRequestException('Character not found');
+
+        const connection = getConnection('charactersConnection');
+        return await connection
+            .getRepository(Characters)
+            .createQueryBuilder('characters')
+            .where(`deleteInfos_Account = ${accountId}`)
+            .select(['characters.guid as guid',
+                    'characters.class as class',
+                    'characters.totaltime as totaltime',
+                    'characters.totalkills as totalkills',
+                    'characters.deleteInfos_Name as deleteInfos_Name'])
+            .getRawMany();
+    }
+
+    @Post('/recoveryHero')
+    @UseGuards(new AuthGuard())
+    async recoveryHero(@Body() recoveryHeroDto: RecoveryHeroDTO, @Account('id') accountID: number)
+    {
+        if (+recoveryHeroDto.accountId !== accountID)
+            throw new BadRequestException('');
+
+        const characters = await this.getDeleteAccountGuid(accountID);
+
+        if (characters.length === 0)
+            throw new NotFoundException('Character not found');
+
+        const Guid = characters.map((character): number => character.guid).find((charGuid: number): boolean => charGuid === +recoveryHeroDto.guid);
+
+        if (!Guid)
+            throw new NotFoundException('Account with that character not found');
+
+        const connection = getConnection('charactersConnection');
+        await connection.getRepository(Characters)
+            .createQueryBuilder('characters')
+            .update(Characters)
+            .set({ account: accountID, name: 'Recovery', deleteInfos_Account: null, deleteInfos_Name: null, deleteDate: null })
+            .where(`guid = ${recoveryHeroDto.guid} AND deleteInfos_Account = ${recoveryHeroDto.accountId}`)
+            .execute();
+
+        return { status: 'success' };
+    }
+
     async getGuid(accountID: number): Promise<any[]>
     {
         const connection = getConnection('charactersConnection');
@@ -191,6 +242,17 @@ export class CharactersController
             .getRepository(Characters)
             .createQueryBuilder('characters')
             .where(`account = ${accountID}`)
+            .select(['characters.guid as guid'])
+            .getRawMany();
+    }
+
+    async getDeleteAccountGuid(accountID: number): Promise<any[]>
+    {
+        const connection = getConnection('charactersConnection');
+        return await connection
+            .getRepository(Characters)
+            .createQueryBuilder('characters')
+            .where(`deleteInfos_Account = ${accountID}`)
             .select(['characters.guid as guid'])
             .getRawMany();
     }
