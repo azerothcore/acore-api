@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Body, Injectable, Patch, UseGuards, ValidationPipe } from '@nestjs/common';
 import { AccountRepository } from './account.repository';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AccountDto } from './dto/account.dto';
@@ -8,6 +8,8 @@ import { EmailDto } from './dto/email.dto';
 import { RemoteRepository, Type } from './remote.repository';
 import { RemoteDto } from './dto/remote.dto';
 import { Request, Response } from 'express';
+import { AuthGuard } from '../shared/auth.guard';
+import { Account } from './account.decorator';
 
 @Injectable()
 export class AuthService
@@ -36,6 +38,11 @@ export class AuthService
     async updateEmail(emailDto: EmailDto, accountID: number): Promise<object>
     {
         return this.accountRepository.updateEmail(emailDto, accountID);
+    }
+
+    async unban(accountID: number): Promise<object>
+    {
+        return this.accountRepository.unban(accountID);
     }
 
     async forgotPassword(accountDto: AccountDto, request: Request): Promise<object>

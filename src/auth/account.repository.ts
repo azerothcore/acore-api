@@ -8,6 +8,7 @@ import { AccountPasswordDto } from './dto/account_password.dto';
 import { AccountPassword } from './account_password.entity';
 import { EmailDto } from './dto/email.dto';
 import { Response } from 'express';
+import { AccountBanned } from './account_banned.entity';
 
 @EntityRepository(Account)
 export class AccountRepository extends Repository<Account>
@@ -98,6 +99,27 @@ export class AccountRepository extends Repository<Account>
         await account.save();
 
         return { status: 'success', message: 'Your email has been changed successfully!' };
+    }
+
+    async unban(accountID: number): Promise<object>
+    {
+        const accountBanned = await AccountBanned.find({ where: { id: accountID } });
+        const account = await this.findOne({ where: { id: accountID } });
+
+        if (!accountBanned && account)
+            throw new BadRequestException('Your account is not ban!');
+
+        for (const accBan of accountBanned)
+        {
+            accBan.active = 0;
+            await accBan.save();
+        }
+
+        account.v = '0';
+        account.s = '0';
+        await account.save();
+
+        return { status: 'success' };
     }
 
     private static async hashPassword(username: string, password: string): Promise<string>

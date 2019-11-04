@@ -51,6 +51,13 @@ export class AuthController
         return this.authService.updateEmail(emailDto, accountID);
     }
 
+    @Patch('/unban')
+    @UseGuards(new AuthGuard())
+    async unban(@Account('id') accountID: number): Promise<object>
+    {
+        return this.authService.unban(accountID);
+    }
+
     @Post('/forgotPassword')
     async forgotPassword(@Body() accountDto: AccountDto, @Req() request: Request): Promise<object>
     {
