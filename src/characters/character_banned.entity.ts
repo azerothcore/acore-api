@@ -1,10 +1,10 @@
 import { BaseEntity, Column, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity({ synchronize: false })
-export class AccountBanned extends BaseEntity
+export class CharacterBanned extends BaseEntity
 {
     @PrimaryColumn()
-    id: number;
+    guid: number;
 
     @PrimaryColumn()
     bandate: number;

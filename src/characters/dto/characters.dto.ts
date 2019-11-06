@@ -1,4 +1,4 @@
-export class RecoveryHeroDTO
+export class CharactersDto
 {
     readonly guid: number;
 }

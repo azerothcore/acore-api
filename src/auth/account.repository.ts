@@ -103,16 +103,13 @@ export class AccountRepository extends Repository<Account>
 
     async unban(accountID: number): Promise<object>
     {
-        const accountBanned = await AccountBanned.find({ where: { id: accountID } });
+        const accountBanned = await AccountBanned.findOne({ where: { id: accountID, active: 1 } });
 
         if (!accountBanned)
             throw new BadRequestException('Your account is not ban!');
 
-        for (const accBan of accountBanned)
-        {
-            accBan.active = 0;
-            await accBan.save();
-        }
+        accountBanned.active = 0;
+        await accountBanned.save();
 
         return { status: 'success' };
     }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, NotFoundException, Param, Query, UseGuards, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Get, Post, NotFoundException, Param, Query, UseGuards, BadRequestException, Patch } from '@nestjs/common';
 import { CharactersService } from './characters.service';
 import { getConnection } from 'typeorm';
 import { Characters } from './characters.entity';
@@ -13,7 +13,8 @@ import { AuthGuard } from '../shared/auth.guard';
 import { Account } from '../auth/account.decorator';
 import { RecoveryItemDTO } from './dto/recovery_item.dto';
 import { AzerothMail } from './azeroth_mail.entity';
-import { RecoveryHeroDTO } from './dto/recovery_hero.dto';
+import { CharactersDto } from './dto/characters.dto';
+import { CharacterBanned } from './character_banned.entity';
 
 @Controller('characters')
 export class CharactersController
@@ -204,14 +205,14 @@ export class CharactersController
 
     @Post('/recoveryHero')
     @UseGuards(new AuthGuard())
-    async recoveryHero(@Body() recoveryHeroDto: RecoveryHeroDTO, @Account('id') accountID: number)
+    async recoveryHero(@Body() charactersDto: CharactersDto, @Account('id') accountID: number)
     {
         const characters = await this.getDeleteAccountGuid(accountID);
 
         if (characters.length === 0)
             throw new NotFoundException('Character not found');
 
-        const Guid = characters.map((character): number => character.guid).find((charGuid: number): boolean => charGuid === +recoveryHeroDto.guid);
+        const Guid = characters.map((character): number => character.guid).find((charGuid: number): boolean => charGuid === +charactersDto.guid);
 
         if (!Guid)
             throw new NotFoundException('Account with that character not found');
@@ -221,7 +222,42 @@ export class CharactersController
             .createQueryBuilder('characters')
             .update(Characters)
             .set({ account: accountID, name: 'Recovery', deleteInfos_Account: null, deleteInfos_Name: null, deleteDate: null })
-            .where(`guid = ${recoveryHeroDto.guid} AND deleteInfos_Account = ${accountID}`)
+            .where(`guid = ${charactersDto.guid} AND deleteInfos_Account = ${accountID}`)
+            .execute();
+
+        return { status: 'success' };
+    }
+
+    @Patch('/unban')
+    @UseGuards(new AuthGuard())
+    async unban(@Body() charactersDto: CharactersDto, @Account('id') accountID: number): Promise<object>
+    {
+        const characters = await this.getGuid(accountID);
+
+        if (characters.length === 0)
+            throw new NotFoundException('Character not found');
+
+        const Guid = characters.map((character): number => character.guid).find((charGuid: number): boolean => charGuid === +charactersDto.guid);
+
+        if (!Guid)
+            throw new NotFoundException('Account with that character not found');
+
+        const connection = getConnection('charactersConnection');
+
+        const characterBanned = await connection.getRepository(CharacterBanned)
+            .createQueryBuilder('character_banned')
+            .where(`guid = ${Guid} AND active = 1`)
+            .select(['character_banned.guid as guid'])
+            .getRawOne();
+
+        if (!characterBanned)
+            throw new BadRequestException('Your character is not ban!');
+
+        await connection.getRepository(CharacterBanned)
+            .createQueryBuilder('character_banned')
+            .update(CharacterBanned)
+            .set({ active: 0 })
+            .where(`guid = ${charactersDto.guid}`)
             .execute();
 
         return { status: 'success' };
