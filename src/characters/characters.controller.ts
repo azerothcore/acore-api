@@ -15,6 +15,7 @@ import { RecoveryItemDTO } from './dto/recovery_item.dto';
 import { AzerothMail } from './azeroth_mail.entity';
 import { CharactersDto } from './dto/characters.dto';
 import { CharacterBanned } from './character_banned.entity';
+import { Misc } from '../shared/misc';
 
 @Controller('characters')
 export class CharactersController
@@ -164,6 +165,8 @@ export class CharactersController
         if (!recoveryItem)
             throw new NotFoundException('Item Not Found');
 
+        await Misc.setCoin(5, accountID);
+
         await connection.getRepository(RecoveryItem)
             .createQueryBuilder('recovery_item')
             .delete()
@@ -217,6 +220,8 @@ export class CharactersController
         if (!Guid)
             throw new NotFoundException('Account with that character not found');
 
+        await Misc.setCoin(20, accountID);
+
         const connection = getConnection('charactersConnection');
         await connection.getRepository(Characters)
             .createQueryBuilder('characters')
@@ -252,6 +257,8 @@ export class CharactersController
 
         if (!characterBanned)
             throw new BadRequestException('Your character is not ban!');
+
+        await Misc.setCoin(5, accountID);
 
         await connection.getRepository(CharacterBanned)
             .createQueryBuilder('character_banned')

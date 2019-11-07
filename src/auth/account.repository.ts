@@ -9,18 +9,25 @@ import { AccountPassword } from './account_password.entity';
 import { EmailDto } from './dto/email.dto';
 import { Response } from 'express';
 import { AccountBanned } from './account_banned.entity';
+import { AccountInformation } from './account_information.entity';
+import { Misc } from '../shared/misc';
 
 @EntityRepository(Account)
 export class AccountRepository extends Repository<Account>
 {
     async signUp(accountDto: AccountDto, response: Response): Promise<void>
     {
-        const { username, password, email, passwordConfirm } = accountDto;
+        const { username, firstName, lastName, phone, password, email, passwordConfirm } = accountDto;
         const account = this.create();
+
         const emailExists = await this.findOne({ reg_mail: email });
+        const phoneExists = await AccountInformation.findOne({ phone });
 
         if (emailExists)
             throw new ConflictException('Email address already exists');
+
+        if (phoneExists)
+            throw new ConflictException('Phone already exists');
 
         if (passwordConfirm !== password)
             throw new BadRequestException('Password does not match');
@@ -32,6 +39,14 @@ export class AccountRepository extends Repository<Account>
         try
         {
             await account.save();
+
+            const accountInformation = new AccountInformation();
+            accountInformation.id = account.id;
+            accountInformation.first_name = firstName;
+            accountInformation.last_name = lastName;
+            accountInformation.phone = phone;
+            await accountInformation.save();
+
             AccountRepository.createToken(account, HttpStatus.CREATED, response);
         }
         catch (error)
@@ -107,6 +122,8 @@ export class AccountRepository extends Repository<Account>
 
         if (!accountBanned)
             throw new BadRequestException('Your account is not ban!');
+
+        await Misc.setCoin(10, accountID);
 
         accountBanned.active = 0;
         await accountBanned.save();

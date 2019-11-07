@@ -7,6 +7,19 @@ export class AccountDto
     @Matches(/^[A-Za-z0-9_]+$/, { message: 'Please enter a valid username' })
     readonly username: string;
 
+    @MinLength(2)
+    @MaxLength(50)
+    @IsString()
+    readonly firstName: string;
+
+    @MinLength(2)
+    @MaxLength(50)
+    @IsString()
+    readonly lastName: string;
+
+    @MaxLength(25)
+    readonly phone: string;
+
     @IsString()
     @MinLength(8)
     @MaxLength(20)
