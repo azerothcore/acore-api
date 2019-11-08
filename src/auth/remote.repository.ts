@@ -1,6 +1,6 @@
 import { EntityRepository, Repository } from 'typeorm';
 import { Remote } from './remote.entity';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { RemoteDto } from './dto/remote.dto';
 import { CharactersController } from '../characters/characters.controller';
 import { Misc } from '../shared/misc';
@@ -47,6 +47,9 @@ export class RemoteRepository extends Repository<Remote>
 
         if (!Guid)
             throw new NotFoundException('Account with that character not found');
+
+        if (remoteDto.profession > 14)
+            throw new NotFoundException('Work not found');
 
         let coin;
 
