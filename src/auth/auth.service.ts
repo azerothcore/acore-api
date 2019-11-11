@@ -13,9 +13,12 @@ import { Request, Response } from 'express';
 export class AuthService
 {
     constructor(
-        @InjectRepository(AccountRepository) private readonly accountRepository: AccountRepository,
-        @InjectRepository(AccountPasswordRepository) private readonly accountPasswordRepository: AccountPasswordRepository,
-        @InjectRepository(RemoteRepository) private readonly remoteRepository: RemoteRepository
+        @InjectRepository(AccountRepository)
+        private readonly accountRepository: AccountRepository,
+        @InjectRepository(AccountPasswordRepository)
+        private readonly accountPasswordRepository: AccountPasswordRepository,
+        @InjectRepository(RemoteRepository)
+        private readonly remoteRepository: RemoteRepository
     ) {}
 
     async signUp(accountDto: AccountDto, response: Response): Promise<void>

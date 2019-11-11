@@ -2,10 +2,15 @@ import { Module } from '@nestjs/common';
 import { CharactersController } from './characters.controller';
 import { CharactersService } from './characters.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Characters } from './characters.entity';
+import { CharacterBanned } from './character_banned.entity';
 
 @Module(
 {
-    imports: [TypeOrmModule.forFeature([])],
+    imports:
+    [
+        TypeOrmModule.forFeature([Characters, CharacterBanned], 'charactersConnection')
+    ],
     controllers: [CharactersController],
     providers: [CharactersService]
 })

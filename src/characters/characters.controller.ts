@@ -235,39 +235,9 @@ export class CharactersController
 
     @Patch('/unban')
     @UseGuards(new AuthGuard())
-    async unban(@Body() charactersDto: CharactersDto, @Account('id') accountID: number): Promise<object>
+    async unban(@Body() charactersDto: CharactersDto, @Account('id') accountID: number)
     {
-        const characters = await this.getGuid(accountID);
-
-        if (characters.length === 0)
-            throw new NotFoundException('Character not found');
-
-        const Guid = characters.map((character): number => character.guid).find((charGuid: number): boolean => charGuid === +charactersDto.guid);
-
-        if (!Guid)
-            throw new NotFoundException('Account with that character not found');
-
-        const connection = getConnection('charactersConnection');
-
-        const characterBanned = await connection.getRepository(CharacterBanned)
-            .createQueryBuilder('character_banned')
-            .where(`guid = ${Guid} AND active = 1`)
-            .select(['character_banned.guid as guid'])
-            .getRawOne();
-
-        if (!characterBanned)
-            throw new BadRequestException('Your character is not ban!');
-
-        await Misc.setCoin(5, accountID);
-
-        await connection.getRepository(CharacterBanned)
-            .createQueryBuilder('character_banned')
-            .update(CharacterBanned)
-            .set({ active: 0 })
-            .where(`guid = ${charactersDto.guid}`)
-            .execute();
-
-        return { status: 'success' };
+        return this.charactersService.unban(charactersDto, accountID);
     }
 
     async getGuid(accountID: number): Promise<any[]>
