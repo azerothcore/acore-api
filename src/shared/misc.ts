@@ -1,5 +1,5 @@
 import { AccountInformation } from '../auth/account_information.entity';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 export class Misc
 {
@@ -12,5 +12,18 @@ export class Misc
 
         accountInformation.coins -= coin;
         await accountInformation.save();
+    }
+
+    static characterGuidValidation(characters, guid: number): boolean
+    {
+        if (characters.length === 0)
+            throw new NotFoundException('Character not found');
+
+        const Guid = characters.map((character): number => character.guid).find((charGuid: number): boolean => charGuid === guid);
+
+        if (!Guid)
+            throw new NotFoundException('Account with that character not found');
+
+        return true;
     }
 }

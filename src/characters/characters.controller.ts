@@ -16,7 +16,7 @@ import { CharactersDto } from './dto/characters.dto';
 @Controller('characters')
 export class CharactersController
 {
-    constructor(private charactersService: CharactersService) {}
+    constructor(private readonly charactersService: CharactersService) {}
 
     @Get('/online')
     async online()
@@ -141,16 +141,5 @@ export class CharactersController
     async unban(@Body() charactersDto: CharactersDto, @Account('id') accountID: number): Promise<object>
     {
         return this.charactersService.unban(charactersDto, accountID);
-    }
-
-    async getGuid(accountID: number): Promise<any[]>
-    {
-        const connection = getConnection('charactersConnection');
-        return await connection
-            .getRepository(Characters)
-            .createQueryBuilder('characters')
-            .where(`account = ${accountID}`)
-            .select(['characters.guid as guid'])
-            .getRawMany();
     }
 }

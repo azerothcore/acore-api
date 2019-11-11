@@ -34,7 +34,7 @@ export class CharactersService
     async recoveryItemList(guid: number, accountID: number)
     {
         const characters = await this.charactersRepository.find({ where: { account: accountID }, select: ['guid'] });
-        this.characterGuidValidation(characters, +guid);
+        Misc.characterGuidValidation(characters, +guid);
 
         return await this.recoveryItemRepository.find({ where: { Guid: guid } });
     }
@@ -42,7 +42,7 @@ export class CharactersService
     async recoveryItem(recoveryItemDto: RecoveryItemDTO, accountID: number): Promise<object>
     {
         const characters = await this.charactersRepository.find({ where: { account: accountID }, select: ['guid'] });
-        this.characterGuidValidation(characters, +recoveryItemDto.guid);
+        Misc.characterGuidValidation(characters, +recoveryItemDto.guid);
 
         const recoveryItem = await this.recoveryItemRepository.count({ where: { Guid: recoveryItemDto.guid, ItemEntry: recoveryItemDto.itemEntry } });
 
@@ -88,7 +88,7 @@ export class CharactersService
     async recoveryHero(charactersDto: CharactersDto, accountID: number): Promise<object>
     {
         const characters = await this.charactersRepository.find({ where: { deleteInfos_Account: accountID }, select: ['guid'] });
-        this.characterGuidValidation(characters, +charactersDto.guid);
+        Misc.characterGuidValidation(characters, +charactersDto.guid);
 
         await Misc.setCoin(20, accountID);
 
@@ -114,7 +114,7 @@ export class CharactersService
     async unban(charactersDto: CharactersDto, accountID: number): Promise<object>
     {
         const characters = await this.charactersRepository.find({ where: { account: accountID }, select: ['guid'] });
-        this.characterGuidValidation(characters, +charactersDto.guid);
+        Misc.characterGuidValidation(characters, +charactersDto.guid);
 
         const _characterBanned = await this.characterBannedRepository.findOne({ where: { guid: charactersDto.guid, active: 1 } });
 
@@ -135,18 +135,5 @@ export class CharactersService
         // await _characterBanned.save();
 
         return { status: 'success' };
-    }
-
-    characterGuidValidation(characters, guid: number): boolean
-    {
-        if (characters.length === 0)
-            throw new NotFoundException('Character not found');
-
-        const Guid = characters.map((character): number => character.guid).find((charGuid: number): boolean => charGuid === guid);
-
-        if (!Guid)
-            throw new NotFoundException('Account with that character not found');
-
-        return true;
     }
 }

@@ -1,9 +1,9 @@
-import { EntityRepository, Repository } from 'typeorm';
+import { EntityRepository, getConnection, Repository } from 'typeorm';
 import { Remote } from './remote.entity';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { RemoteDto } from './dto/remote.dto';
-import { CharactersController } from '../characters/characters.controller';
 import { Misc } from '../shared/misc';
+import { Characters } from '../characters/characters.entity';
 
 export enum Type
 {
@@ -38,15 +38,13 @@ export class RemoteRepository extends Repository<Remote>
 {
     async createRemote(remoteDto: RemoteDto, accountID: number, type: Type): Promise<object>
     {
-        const characters =  await new CharactersController(undefined).getGuid(accountID);
+        const characters = await getConnection('charactersConnection').getRepository(Characters)
+            .createQueryBuilder('characters')
+            .where(`account = ${accountID}`)
+            .select(['characters.guid as guid'])
+            .getRawMany();
 
-        if (characters.length === 0)
-            throw new NotFoundException('Character not found');
-
-        const Guid = characters.map((character): number => character.guid).find((guid: number): boolean => guid === +remoteDto.guid);
-
-        if (!Guid)
-            throw new NotFoundException('Account with that character not found');
+        Misc.characterGuidValidation(characters, +remoteDto.guid);
 
         if (remoteDto.profession > 14)
             throw new NotFoundException('Work not found');
@@ -102,7 +100,7 @@ export class RemoteRepository extends Repository<Remote>
         await Misc.setCoin(coin, accountID);
 
         const remote = this.create();
-        remote.guid = Guid;
+        remote.guid = remoteDto.guid;
         remote.type = type;
         remote.profession = type === Type.PROFESSION ? remoteDto.profession : 0;
         await remote.save();
