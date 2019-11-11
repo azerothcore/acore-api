@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, NotFoundException, Param, Query, UseGuards, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Post, Param, Query, UseGuards, Patch } from '@nestjs/common';
 import { CharactersService } from './characters.service';
 import { getConnection } from 'typeorm';
 import { Characters } from './characters.entity';
@@ -8,13 +8,10 @@ import { ArenaTeam } from './arena_team.entity';
 import { ArenaTeamMember } from './arena_team_member.entity';
 import { CharacterArenaStats } from './character_arena_stats.entity';
 import { Worldstates } from './worldstates.entity';
-import { RecoveryItem } from './recovery_item.entity';
 import { AuthGuard } from '../shared/auth.guard';
 import { Account } from '../auth/account.decorator';
 import { RecoveryItemDTO } from './dto/recovery_item.dto';
-import { AzerothMail } from './azeroth_mail.entity';
 import { CharactersDto } from './dto/characters.dto';
-import { Misc } from '../shared/misc';
 
 @Controller('characters')
 export class CharactersController
@@ -121,71 +118,14 @@ export class CharactersController
     @UseGuards(new AuthGuard())
     async recoveryItemList(@Param('guid') guid: number, @Account('id') accountID: number)
     {
-        const characters = await this.getGuid(accountID);
-
-        if (characters.length === 0)
-            throw new NotFoundException('Character not found');
-
-        const Guid = characters.map((character): number => character.guid).find((charGuid: number): boolean => charGuid === +guid);
-
-        if (!Guid)
-            throw new NotFoundException('Account with that character not found');
-
-        const connection = getConnection('charactersConnection');
-        return await connection
-            .getRepository(RecoveryItem)
-            .createQueryBuilder('recovery_item')
-            .select(['recovery_item.*'])
-            .where(`recovery_item.Guid = ${guid}`)
-            .getRawMany();
+        return this.charactersService.recoveryItemList(guid, accountID);
     }
 
     @Post('/recoveryItem')
     @UseGuards(new AuthGuard())
     async recoveryItem(@Body() recoveryItemDto: RecoveryItemDTO, @Account('id') accountID: number): Promise<object>
     {
-        const characters = await this.getGuid(accountID);
-
-        if (characters.length === 0)
-            throw new NotFoundException('Character not found');
-
-        const Guid = characters.map((character): number => character.guid).find((charGuid: number): boolean => charGuid === +recoveryItemDto.guid);
-
-        if (!Guid)
-            throw new NotFoundException('Account with that character not found');
-
-        const connection = getConnection('charactersConnection');
-
-        const recoveryItem = await connection.getRepository(RecoveryItem)
-            .createQueryBuilder('recovery_item')
-            .where(`Guid = :guid AND ItemEntry = :itemEntry`, { guid: recoveryItemDto.guid, itemEntry: recoveryItemDto.itemEntry })
-            .getCount();
-
-        if (!recoveryItem)
-            throw new NotFoundException('Item Not Found');
-
-        await Misc.setCoin(5, accountID);
-
-        await connection.getRepository(RecoveryItem)
-            .createQueryBuilder('recovery_item')
-            .delete()
-            .where(`Guid = :guid AND ItemEntry = :itemEntry`, { guid: recoveryItemDto.guid, itemEntry: recoveryItemDto.itemEntry })
-            .execute();
-
-        await connection.getRepository(AzerothMail)
-            .createQueryBuilder('azeroth_mail')
-            .insert()
-            .into(AzerothMail)
-            .values(
-            {
-                subject: 'Recovery Item',
-                guid: recoveryItemDto.guid,
-                entry: recoveryItemDto.itemEntry,
-                count: 1
-            })
-            .execute();
-
-        return { status: 'success' };
+        return this.charactersService.recoveryItem(recoveryItemDto, accountID);
     }
 
     @Get('/recoveryHeroList')

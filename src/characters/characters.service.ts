@@ -5,6 +5,9 @@ import { getConnection, Repository } from 'typeorm';
 import { CharacterBanned } from './character_banned.entity';
 import { CharactersDto } from './dto/characters.dto';
 import { Misc } from '../shared/misc';
+import { RecoveryItem } from './recovery_item.entity';
+import { RecoveryItemDTO } from './dto/recovery_item.dto';
+import { AzerothMail } from './azeroth_mail.entity';
 
 @Injectable()
 export class CharactersService
@@ -14,7 +17,56 @@ export class CharactersService
         private readonly charactersRepository: Repository<Characters>,
         @InjectRepository(CharacterBanned, 'charactersConnection')
         private readonly characterBannedRepository: Repository<CharacterBanned>,
+        @InjectRepository(RecoveryItem, 'charactersConnection')
+        private readonly recoveryItemRepository: Repository<RecoveryItem>,
+        @InjectRepository(AzerothMail, 'charactersConnection')
+        private readonly azerothMailRepository: Repository<AzerothMail>,
     ) {}
+
+    async recoveryItemList(guid: number, accountID: number)
+    {
+        const characters = await this.charactersRepository.find({ where: { account: accountID }, select: ['guid'] });
+        this.characterGuidValidation(characters, +guid);
+
+        return await this.recoveryItemRepository.find({ where: { Guid: guid } });
+    }
+
+    async recoveryItem(recoveryItemDto: RecoveryItemDTO, accountID: number): Promise<object>
+    {
+        const characters = await this.charactersRepository.find({ where: { account: accountID }, select: ['guid'] });
+        this.characterGuidValidation(characters, +recoveryItemDto.guid);
+
+        const recoveryItem = await this.recoveryItemRepository.count({ where: { Guid: recoveryItemDto.guid, ItemEntry: recoveryItemDto.itemEntry } });
+
+        if (!recoveryItem)
+            throw new NotFoundException('Item Not Found');
+
+        await Misc.setCoin(8, accountID);
+        await this.recoveryItemRepository.delete({ Guid: recoveryItemDto.guid, ItemEntry: recoveryItemDto.itemEntry });
+
+        await getConnection('charactersConnection').getRepository(AzerothMail)
+            .createQueryBuilder('azeroth_mail')
+            .insert()
+            .into(AzerothMail)
+            .values(
+                {
+                    subject: 'Recovery Item',
+                    guid: recoveryItemDto.guid,
+                    entry: recoveryItemDto.itemEntry,
+                    count: 1
+                })
+            .execute();
+
+        // @TODO SHOULD BE.
+        // const azerothMail = this.azerothMailRepository.create();
+        // azerothMail.subject = 'Recovery Item';
+        // azerothMail.guid = recoveryItemDto.guid;
+        // azerothMail.entry = recoveryItemDto.itemEntry;
+        // azerothMail.count = 1;
+        // await azerothMail.save();
+
+        return { status: 'success' };
+    }
 
     async recoveryHeroList(accountID: number)
     {
@@ -28,7 +80,7 @@ export class CharactersService
     async recoveryHero(charactersDto: CharactersDto, accountID: number): Promise<object>
     {
         const characters = await this.charactersRepository.find({ where: { deleteInfos_Account: accountID }, select: ['guid'] });
-        this.characterGuidValidation(characters, charactersDto.guid);
+        this.characterGuidValidation(characters, +charactersDto.guid);
 
         await Misc.setCoin(20, accountID);
 
@@ -54,7 +106,7 @@ export class CharactersService
     async unban(charactersDto: CharactersDto, accountID: number): Promise<object>
     {
         const characters = await this.charactersRepository.find({ where: { account: accountID }, select: ['guid'] });
-        this.characterGuidValidation(characters, charactersDto.guid);
+        this.characterGuidValidation(characters, +charactersDto.guid);
 
         const _characterBanned = await this.characterBannedRepository.findOne({ where: { guid: charactersDto.guid, active: 1 } });
 
@@ -77,7 +129,7 @@ export class CharactersService
         return { status: 'success' };
     }
 
-    characterGuidValidation(characters, guid): boolean
+    characterGuidValidation(characters, guid: number): boolean
     {
         if (characters.length === 0)
             throw new NotFoundException('Character not found');
