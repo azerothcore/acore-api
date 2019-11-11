@@ -1,13 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Characters } from './characters.entity';
-import { getConnection, Repository } from 'typeorm';
+import { getConnection, Like, Repository } from 'typeorm';
 import { CharacterBanned } from './character_banned.entity';
 import { CharactersDto } from './dto/characters.dto';
 import { Misc } from '../shared/misc';
 import { RecoveryItem } from './recovery_item.entity';
 import { RecoveryItemDTO } from './dto/recovery_item.dto';
 import { AzerothMail } from './azeroth_mail.entity';
+import { Worldstates } from './worldstates.entity';
 
 @Injectable()
 export class CharactersService
@@ -21,7 +22,14 @@ export class CharactersService
         private readonly recoveryItemRepository: Repository<RecoveryItem>,
         @InjectRepository(AzerothMail, 'charactersConnection')
         private readonly azerothMailRepository: Repository<AzerothMail>,
+        @InjectRepository(Worldstates, 'charactersConnection')
+        private readonly worldstatesRepository: Repository<Worldstates>,
     ) {}
+
+    async search_worldstates(param: Worldstates)
+    {
+        return await this.worldstatesRepository.find({ comment: Like(`%${param.comment}%`) });
+    }
 
     async recoveryItemList(guid: number, accountID: number)
     {

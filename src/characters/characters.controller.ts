@@ -105,13 +105,7 @@ export class CharactersController
     @Get('search/worldstates')
     async search_worldstates(@Query() param: Worldstates)
     {
-        const connection = getConnection('charactersConnection');
-        return await connection
-            .getRepository(Worldstates)
-            .createQueryBuilder('worldstates')
-            .select(['worldstates.*'])
-            .where('worldstates.comment LIKE "%' + param.comment + '%"')
-            .getRawMany();
+        return this.charactersService.search_worldstates(param);
     }
 
     @Get('/recoveryItemList/:guid')

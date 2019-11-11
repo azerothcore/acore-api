@@ -6,12 +6,13 @@ import { Characters } from './characters.entity';
 import { CharacterBanned } from './character_banned.entity';
 import { RecoveryItem } from './recovery_item.entity';
 import { AzerothMail } from './azeroth_mail.entity';
+import { Worldstates } from './worldstates.entity';
 
 @Module(
 {
     imports:
     [
-        TypeOrmModule.forFeature([Characters, CharacterBanned, RecoveryItem, AzerothMail], 'charactersConnection')
+        TypeOrmModule.forFeature([Characters, CharacterBanned, RecoveryItem, AzerothMail, Worldstates], 'charactersConnection')
     ],
     controllers: [CharactersController],
     providers: [CharactersService]
