@@ -2,6 +2,7 @@ import { CanActivate, ExecutionContext, Injectable, InternalServerErrorException
 import * as jwt from 'jsonwebtoken';
 import { Account } from '../auth/account.entity';
 import { AccountPassword } from '../auth/account_password.entity';
+import { AccountInformation } from '../auth/account_information.entity';
 
 @Injectable()
 export class AuthGuard implements CanActivate
@@ -51,6 +52,8 @@ export class AuthGuard implements CanActivate
             throw new UnauthorizedException('The account belonging to this token does no longer exist.');
 
         accountExists.sha_pass_hash = undefined;
+        accountExists.v = undefined;
+        accountExists.s = undefined;
 
         const accountPassword = await AccountPassword.findOne({ where: { id: this.decoded.id } });
 
@@ -62,7 +65,9 @@ export class AuthGuard implements CanActivate
                 throw new UnauthorizedException('User recently changed password! Please log in again');
         }
 
-        request.account = accountExists;
+        const accountInformation = await AccountInformation.findOne({ where: { id: this.decoded.id } });
+
+        request.account = { ...accountInformation, ...accountExists };
 
         return true;
     }
