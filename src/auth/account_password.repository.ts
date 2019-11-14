@@ -2,11 +2,12 @@ import * as crypto from 'crypto';
 import { EntityRepository, MoreThan, Repository } from 'typeorm';
 import { AccountPassword } from './account_password.entity';
 import { AccountDto } from './dto/account.dto';
-import { BadRequestException, InternalServerErrorException, NotFoundException, Req, Res } from '@nestjs/common';
+import { BadRequestException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { Account } from './account.entity';
 import { Email } from '../shared/email';
 import { AccountPasswordDto } from './dto/account_password.dto';
 import { Request } from 'express';
+import { Misc } from '../shared/misc';
 
 @EntityRepository(AccountPassword)
 export class AccountPasswordRepository extends Repository<AccountPassword>
@@ -56,10 +57,9 @@ export class AccountPasswordRepository extends Repository<AccountPassword>
             throw new BadRequestException('Password does not match');
 
         const account = await Account.findOne({ where: { id: accountPassword.id } });
-        const SHA = await crypto.createHash('sha1').update(`${account.username.toUpperCase()}:${password}`.toUpperCase()).digest('hex').toUpperCase();
         account.v = '0';
         account.s = '0';
-        account.sha_pass_hash = SHA;
+        account.sha_pass_hash = await Misc.hashPassword(account.username, password);
         await account.save();
 
         accountPassword.password_changed_at = new Date(Date.now() - 1000);

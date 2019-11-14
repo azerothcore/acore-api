@@ -1,6 +1,6 @@
 import { EntityRepository, Repository } from 'typeorm';
 import { Remote } from './remote.entity';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { RemoteDto } from './dto/remote.dto';
 import { CharactersController } from '../characters/characters.controller';
 import { Misc } from '../shared/misc';

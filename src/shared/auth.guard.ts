@@ -67,7 +67,7 @@ export class AuthGuard implements CanActivate
 
         const accountInformation = await AccountInformation.findOne({ where: { id: this.decoded.id } });
 
-        request.account = { ...accountInformation, ...accountExists };
+        request.account = { ...accountExists, ...accountInformation };
 
         return true;
     }

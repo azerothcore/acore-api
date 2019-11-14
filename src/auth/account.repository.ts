@@ -1,4 +1,3 @@
-import * as crypto from 'crypto';
 import * as jwt from 'jsonwebtoken';
 import { EntityRepository, Repository } from 'typeorm';
 import { Account } from './account.entity';
@@ -33,7 +32,7 @@ export class AccountRepository extends Repository<Account>
             throw new BadRequestException('Password does not match');
 
         account.username = username.toUpperCase();
-        account.sha_pass_hash = await AccountRepository.hashPassword(username, password);
+        account.sha_pass_hash = await Misc.hashPassword(username, password);
         account.reg_mail = email.toUpperCase();
 
         try
@@ -63,7 +62,7 @@ export class AccountRepository extends Repository<Account>
         const { username, password }: { username: string, password: string } = accountDto;
         const account = await this.findOne({ where: { username } });
 
-        if (!account || (await AccountRepository.hashPassword(username, password)) !== account.sha_pass_hash)
+        if (!account || (await Misc.hashPassword(username, password)) !== account.sha_pass_hash)
             throw new UnauthorizedException('Incorrect username or password');
 
         AccountRepository.createToken(account, HttpStatus.OK, response);
@@ -74,7 +73,7 @@ export class AccountRepository extends Repository<Account>
         const { passwordCurrent, password, passwordConfirm } = accountPasswordDto;
         const account = await this.findOne({ where: { id: accountID } });
 
-        if ((await AccountRepository.hashPassword(account.username, passwordCurrent)) !== account.sha_pass_hash)
+        if ((await Misc.hashPassword(account.username, passwordCurrent)) !== account.sha_pass_hash)
             throw new UnauthorizedException('Your current password is wrong!');
 
         if (passwordConfirm !== password)
@@ -82,7 +81,7 @@ export class AccountRepository extends Repository<Account>
 
         account.v = '0';
         account.s = '0';
-        account.sha_pass_hash = await AccountRepository.hashPassword(account.username, password);
+        account.sha_pass_hash = await Misc.hashPassword(account.username, password);
         await account.save();
 
         const accountPassword = new AccountPassword();
@@ -107,7 +106,7 @@ export class AccountRepository extends Repository<Account>
         if (email.toUpperCase() === account.reg_mail)
             throw new ConflictException('That email address already exists');
 
-        if ((await AccountRepository.hashPassword(account.username, password)) !== account.sha_pass_hash)
+        if ((await Misc.hashPassword(account.username, password)) !== account.sha_pass_hash)
             throw new UnauthorizedException('Your current password is wrong!');
 
         account.reg_mail = email.toUpperCase();
@@ -129,11 +128,6 @@ export class AccountRepository extends Repository<Account>
         await accountBanned.save();
 
         return { status: 'success' };
-    }
-
-    private static async hashPassword(username: string, password: string): Promise<string>
-    {
-        return crypto.createHash('sha1').update(`${username.toUpperCase()}:${password}`.toUpperCase()).digest('hex').toUpperCase();
     }
 
     private static createToken(account: any, statusCode: number, response: Response): void

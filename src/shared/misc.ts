@@ -1,5 +1,6 @@
 import { AccountInformation } from '../auth/account_information.entity';
 import { BadRequestException } from '@nestjs/common';
+import * as crypto from 'crypto';
 
 export class Misc
 {
@@ -12,5 +13,10 @@ export class Misc
 
         accountInformation.coins -= coin;
         await accountInformation.save();
+    }
+
+    static async hashPassword(username: string, password: string): Promise<string>
+    {
+        return crypto.createHash('sha1').update(`${username.toUpperCase()}:${password}`.toUpperCase()).digest('hex').toUpperCase();
     }
 }

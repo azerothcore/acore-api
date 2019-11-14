@@ -1,5 +1,15 @@
-import * as nodemailer from 'nodemailer';
-import * as htmlToText from 'html-to-text';
+import { createTransport } from 'nodemailer';
+import { fromString } from 'html-to-text';
+import { Account } from '../auth/account.entity';
+
+interface IEmail
+{
+    from: string;
+    to: string;
+    subject: string;
+    html: string;
+    text: string;
+}
 
 export class Email
 {
@@ -8,7 +18,7 @@ export class Email
     private readonly url: string;
     private readonly from: string;
 
-    constructor(account, url)
+    constructor(account: Account, url: string)
     {
         this.to = account.reg_mail;
         this.username = account.username;
@@ -16,9 +26,9 @@ export class Email
         this.from = process.env.MAIL_FROM;
     }
 
-    private newTransport(mailOptions)
+    private static newTransport(mailOptions: IEmail): object
     {
-        return nodemailer.createTransport(
+        return createTransport(
         {
             host: process.env.MAIL_HOST,
             port: +process.env.MAIL_PORT,
@@ -30,17 +40,15 @@ export class Email
         }).sendMail(mailOptions);
     }
 
-    private async send(template, subject)
+    private async send(template: string, subject: string): Promise<void>
     {
-        // @TODO FIXME PUG OR EJS TEMPLATE FOR SENDING EMAIL
-        const html = template;
-        const mailOptions = { from: this.from, to: this.to, subject, html, text: htmlToText.fromString(html) };
-        await this.newTransport(mailOptions);
+        const mailOptions: IEmail = { from: this.from, to: this.to, subject, html: template, text: fromString(template) };
+        await Email.newTransport(mailOptions);
     }
 
-    async sendPasswordReset()
+    async sendPasswordReset(): Promise<void>
     {
-        const template =
+        const template: string =
         `
             <h1>Forgot your password?</h1>
             <p>Submit a patch request with your new password and password confirm to: <a href="${this.url}">Reset my password</a></p>
