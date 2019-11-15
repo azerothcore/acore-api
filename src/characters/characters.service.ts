@@ -9,6 +9,7 @@ import { RecoveryItem } from './recovery_item.entity';
 import { RecoveryItemDTO } from './dto/recovery_item.dto';
 import { AzerothMail } from './azeroth_mail.entity';
 import { Worldstates } from './worldstates.entity';
+import { ArenaTeam } from './arena_team.entity';
 
 @Injectable()
 export class CharactersService
@@ -24,7 +25,18 @@ export class CharactersService
         private readonly azerothMailRepository: Repository<AzerothMail>,
         @InjectRepository(Worldstates, 'charactersConnection')
         private readonly worldstatesRepository: Repository<Worldstates>,
+        @InjectRepository(ArenaTeam, 'charactersConnection')
+        private readonly arenaTeamRepository: Repository<ArenaTeam>,
     ) {}
+
+    async arena_team_id(arenaTeamId: number)
+    {
+        // @TODO FIX RELATIONS
+        const arena = await this.arenaTeamRepository.findOne({ where: { arenaTeamId } });
+        const characters = await this.charactersRepository.findOne({ where: { guid: arena.captainGuid }, select: ['name', 'race'] });
+
+        return { ...arena, characters };
+    }
 
     async search_worldstates(param: Worldstates)
     {

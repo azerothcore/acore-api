@@ -115,14 +115,14 @@ export class AuthController
     @Get('/pulse/:days')
     async pulse(@Param('days') days: number)
     {
-       return await getConnection()
-          .getRepository(AccountEntity)
-          .createQueryBuilder('auth')
-          .select([
-            'COUNT(*) AS accounts',
-            'COUNT(DISTINCT(last_ip)) AS IPs'
-          ])
-          .where('DATEDIFF(NOW(), last_login) < ' + days)
-          .getRawMany();
+        return await getConnection()
+            .getRepository(AccountEntity)
+            .createQueryBuilder('auth')
+            .select([
+                'COUNT(*) AS accounts',
+                'COUNT(DISTINCT(last_ip)) AS IPs'
+            ])
+            .where('DATEDIFF(NOW(), last_login) < ' + days)
+            .getRawMany();
     }
 }

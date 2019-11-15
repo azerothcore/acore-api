@@ -47,16 +47,7 @@ export class CharactersController
     @Get('/arena_team/id/:arenaTeamId')
     async arena_team_id(@Param('arenaTeamId') arenaTeamId: number)
     {
-        const connection = getConnection('charactersConnection');
-        return await connection
-            .getRepository(ArenaTeam)
-            .createQueryBuilder('arena_team')
-            .innerJoinAndSelect(Characters, 'c', 'c.guid = arena_team.captainGuid')
-            .select(['c.name AS captainName',
-                     'c.race AS captainRace',
-                     'arena_team.*'])
-            .where('arena_team.arenaTeamId = ' + arenaTeamId)
-            .getRawMany();
+        return this.charactersService.arena_team_id(arenaTeamId);
     }
 
     @Get('/arena_team/type/:type/')
