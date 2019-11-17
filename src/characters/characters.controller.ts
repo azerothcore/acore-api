@@ -132,46 +132,16 @@ export class CharactersController
 
     @Get('/recoveryHeroList')
     @UseGuards(new AuthGuard())
-    async recoveryHeroList(@Account('id') accountID: number)
+    async recoveryHeroList(@Account('id') accountId: number): Promise<object>
     {
-        const connection = getConnection('charactersConnection');
-        return await connection
-            .getRepository(Characters)
-            .createQueryBuilder('characters')
-            .where(`deleteInfos_Account = ${accountID}`)
-            .select(['characters.guid as guid',
-                    'characters.class as class',
-                    'characters.totaltime as totaltime',
-                    'characters.totalkills as totalkills',
-                    'characters.deleteInfos_Name as deleteInfos_Name'])
-            .getRawMany();
+        return this.charactersService.recoveryHeroList(accountId);
     }
 
     @Post('/recoveryHero')
     @UseGuards(new AuthGuard())
-    async recoveryHero(@Body() charactersDto: CharactersDto, @Account('id') accountID: number)
+    async recoveryHero(@Body() charactersDto: CharactersDto, @Account('id') accountId: number): Promise<object>
     {
-        const characters = await this.getDeleteAccountGuid(accountID);
-
-        if (characters.length === 0)
-            throw new NotFoundException('Character not found');
-
-        const Guid = characters.map((character): number => character.guid).find((charGuid: number): boolean => charGuid === +charactersDto.guid);
-
-        if (!Guid)
-            throw new NotFoundException('Account with that character not found');
-
-        await Misc.setCoin(20, accountID);
-
-        const connection = getConnection('charactersConnection');
-        await connection.getRepository(Characters)
-            .createQueryBuilder('characters')
-            .update(Characters)
-            .set({ account: accountID, name: 'Recovery', deleteInfos_Account: null, deleteInfos_Name: null, deleteDate: null })
-            .where(`guid = ${charactersDto.guid} AND deleteInfos_Account = ${accountID}`)
-            .execute();
-
-        return { status: 'success' };
+        return this.charactersService.recoveryHero(charactersDto, accountId);
     }
 
     @Patch('/unban')

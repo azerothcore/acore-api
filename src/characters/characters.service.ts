@@ -5,6 +5,8 @@ import { Repository } from 'typeorm';
 import { RecoveryItemDTO } from './dto/recovery_item.dto';
 import { RecoveryItem } from './recovery_item.entity';
 import { Soap } from '../shared/soap';
+import { CharactersDto } from './dto/characters.dto';
+import { Misc } from '../shared/misc';
 
 @Injectable()
 export class CharactersService
@@ -40,6 +42,29 @@ export class CharactersService
         await this.recoveryItemRepository.delete({ Id: recoveryItemDto.id });
 
         Soap.command(`send items ${characters.name} "Recovery Item" "AzerothJS Recovery Item" ${recoveryItemDto.itemEntry}:${recoveryItem.Count}`);
+
+        return { status: 'success' };
+    }
+
+    async recoveryHeroList(accountId: number): Promise<object>
+    {
+        return await this.charactersRepository.find(
+        {
+            where: { deleteInfos_Account: accountId },
+            select: ['guid', 'class', 'totaltime', 'totalKills', 'deleteInfos_Name']
+        });
+    }
+
+    async recoveryHero(charactersDto: CharactersDto, accountId: number): Promise<object>
+    {
+        const characters = await this.charactersRepository.findOne({ select: ['guid', 'deleteInfos_Name'], where: { deleteInfos_Account: accountId } });
+
+        if (characters.guid !== +charactersDto.guid)
+            throw new NotFoundException('Account with that character not found');
+
+        await Misc.setCoin(10, accountId);
+
+        Soap.command(`character deleted restore ${charactersDto.guid} ${characters.deleteInfos_Name} ${accountId}`);
 
         return { status: 'success' };
     }
