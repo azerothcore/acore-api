@@ -7,11 +7,6 @@ import { Misc } from '../shared/misc';
 
 export enum Type
 {
-    RENAME = 1,
-    CUSTOMIZE = 2,
-    CHANGE_FACTION = 3,
-    CHANGE_RACE = 4,
-    BOOST = 5,
     PROFESSION = 6
 }
 
@@ -55,21 +50,6 @@ export class RemoteRepository extends Repository<Remote>
 
         switch (type)
         {
-            case Type.RENAME:
-                coin = 5;
-                break;
-            case Type.CUSTOMIZE:
-                coin = 10;
-                break;
-            case Type.CHANGE_FACTION:
-                coin = 20;
-                break;
-            case Type.CHANGE_RACE:
-                coin = 15;
-                break;
-            case Type.BOOST:
-                coin = 5;
-                break;
             case Type.PROFESSION:
             {
                 switch (remoteDto.profession)

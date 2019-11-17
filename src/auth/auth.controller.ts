@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Patch, Post, Req, Res, UseGuards, ValidationPipe, Get, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Param, Patch, Post, Req, Res, UseGuards, ValidationPipe, Get, HttpStatus, } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { AccountDto } from './dto/account.dto';
@@ -72,37 +72,37 @@ export class AuthController
 
     @Post('/rename')
     @UseGuards(new AuthGuard())
-    async rename(@Body() remoteDto: RemoteDto, @Account('id') accountID: number): Promise<object>
+    async rename(@Body() remoteDto: RemoteDto, @Account('id') accountId: number)
     {
-        return this.authService.rename(remoteDto, accountID);
+        return this.authService.rename(remoteDto, accountId);
     }
 
     @Post('/customize')
     @UseGuards(new AuthGuard())
-    async customize(@Body() remoteDto: RemoteDto, @Account('id') accountID: number): Promise<object>
+    async customize(@Body() remoteDto: RemoteDto, @Account('id') accountId: number): Promise<object>
     {
-        return this.authService.customize(remoteDto, accountID);
+        return this.authService.customize(remoteDto, accountId);
     }
 
     @Post('/changeFaction')
     @UseGuards(new AuthGuard())
-    async changeFaction(@Body() remoteDto: RemoteDto, @Account('id') accountID: number): Promise<object>
+    async changeFaction(@Body() remoteDto: RemoteDto, @Account('id') accountId: number): Promise<object>
     {
-        return this.authService.changeFaction(remoteDto, accountID);
+        return this.authService.changeFaction(remoteDto, accountId);
     }
 
     @Post('/changeRace')
     @UseGuards(new AuthGuard())
-    async changeRace(@Body() remoteDto: RemoteDto, @Account('id') accountID: number): Promise<object>
+    async changeRace(@Body() remoteDto: RemoteDto, @Account('id') accountId: number): Promise<object>
     {
-        return this.authService.changeRace(remoteDto, accountID);
+        return this.authService.changeRace(remoteDto, accountId);
     }
 
     @Post('/boost')
     @UseGuards(new AuthGuard())
-    async boost(@Body() remoteDto: RemoteDto, @Account('id') accountID: number): Promise<object>
+    async boost(@Body() remoteDto: RemoteDto, @Account('id') accountId: number): Promise<object>
     {
-        return this.authService.boost(remoteDto, accountID);
+        return this.authService.boost(remoteDto, accountId);
     }
 
     @Post('/profession')
