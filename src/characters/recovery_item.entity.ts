@@ -1,29 +1,17 @@
-import { BaseEntity, Column, Entity, PrimaryColumn } from 'typeorm';
+import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ synchronize: false })
 export class RecoveryItem extends BaseEntity
 {
+    @PrimaryGeneratedColumn()
+    Id: number;
+
     @Column()
     Guid: number;
 
-    @PrimaryColumn()
+    @Column()
     ItemEntry: number;
 
     @Column()
-    Name: string;
-
-    @Column()
-    ItemLevel: number;
-
-    @Column()
-    DisplayId: number;
-
-    @Column()
-    Quality: number;
-
-    @Column()
-    InventoryType: number;
-
-    @Column()
-    Material: number;
+    Count: number;
 }
