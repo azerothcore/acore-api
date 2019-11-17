@@ -1,12 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Characters } from './characters.entity';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { RecoveryItemDTO } from './dto/recovery_item.dto';
 import { RecoveryItem } from './recovery_item.entity';
 import { Soap } from '../shared/soap';
 import { CharactersDto } from './dto/characters.dto';
 import { Misc } from '../shared/misc';
+import { CharacterBanned } from './character_banned.entity';
+import { Worldstates } from './worldstates.entity';
 
 @Injectable()
 export class CharactersService
@@ -16,7 +18,16 @@ export class CharactersService
         private readonly charactersRepository: Repository<Characters>,
         @InjectRepository(RecoveryItem, 'charactersConnection')
         private readonly recoveryItemRepository: Repository<RecoveryItem>,
+        @InjectRepository(CharacterBanned, 'charactersConnection')
+        private readonly characterBannedRepository: Repository<CharacterBanned>,
+        @InjectRepository(Worldstates, 'charactersConnection')
+        private readonly worldstatesRepository: Repository<Worldstates>,
     ) {}
+
+    async search_worldstates(param: Worldstates)
+    {
+        return await this.worldstatesRepository.find({ comment: Like(`%${param.comment}%`) });
+    }
 
     async recoveryItemList(guid: number, accountID: number)
     {
@@ -65,6 +76,25 @@ export class CharactersService
         await Misc.setCoin(10, accountId);
 
         Soap.command(`character deleted restore ${charactersDto.guid} ${characters.deleteInfos_Name} ${accountId}`);
+
+        return { status: 'success' };
+    }
+
+    async unban(charactersDto: CharactersDto, accountId: number): Promise<object>
+    {
+        const characters = await this.charactersRepository.findOne({ select: ['guid', 'name'], where: { account: accountId } });
+
+        if (characters.guid !== +charactersDto.guid)
+            throw new NotFoundException('Account with that character not found');
+
+        const characterBanned = await this.characterBannedRepository.findOne({ where: { guid: charactersDto.guid, active: 1 } });
+
+        if (!characterBanned)
+            throw new BadRequestException('Your character is not ban!');
+
+        await Misc.setCoin(5, accountId);
+
+        Soap.command(`unban character ${characters.name}`);
 
         return { status: 'success' };
     }

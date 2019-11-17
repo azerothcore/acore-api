@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, NotFoundException, Param, Query, UseGuards, BadRequestException, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Post, Param, Query, UseGuards, Patch } from '@nestjs/common';
 import { CharactersService } from './characters.service';
 import { getConnection } from 'typeorm';
 import { Characters } from './characters.entity';
@@ -12,8 +12,6 @@ import { AuthGuard } from '../shared/auth.guard';
 import { Account } from '../auth/account.decorator';
 import { RecoveryItemDTO } from './dto/recovery_item.dto';
 import { CharactersDto } from './dto/characters.dto';
-import { CharacterBanned } from './character_banned.entity';
-import { Misc } from '../shared/misc';
 
 @Controller('characters')
 export class CharactersController
@@ -107,13 +105,7 @@ export class CharactersController
     @Get('search/worldstates')
     async search_worldstates(@Query() param: Worldstates)
     {
-        const connection = getConnection('charactersConnection');
-        return await connection
-            .getRepository(Worldstates)
-            .createQueryBuilder('worldstates')
-            .select(['worldstates.*'])
-            .where('worldstates.comment LIKE "%' + param.comment + '%"')
-            .getRawMany();
+        return this.charactersService.search_worldstates(param);
     }
 
     @Get('/recoveryItemList/:guid')
@@ -146,39 +138,9 @@ export class CharactersController
 
     @Patch('/unban')
     @UseGuards(new AuthGuard())
-    async unban(@Body() charactersDto: CharactersDto, @Account('id') accountID: number): Promise<object>
+    async unban(@Body() charactersDto: CharactersDto, @Account('id') accountId: number): Promise<object>
     {
-        const characters = await this.getGuid(accountID);
-
-        if (characters.length === 0)
-            throw new NotFoundException('Character not found');
-
-        const Guid = characters.map((character): number => character.guid).find((charGuid: number): boolean => charGuid === +charactersDto.guid);
-
-        if (!Guid)
-            throw new NotFoundException('Account with that character not found');
-
-        const connection = getConnection('charactersConnection');
-
-        const characterBanned = await connection.getRepository(CharacterBanned)
-            .createQueryBuilder('character_banned')
-            .where(`guid = ${Guid} AND active = 1`)
-            .select(['character_banned.guid as guid'])
-            .getRawOne();
-
-        if (!characterBanned)
-            throw new BadRequestException('Your character is not ban!');
-
-        await Misc.setCoin(5, accountID);
-
-        await connection.getRepository(CharacterBanned)
-            .createQueryBuilder('character_banned')
-            .update(CharacterBanned)
-            .set({ active: 0 })
-            .where(`guid = ${charactersDto.guid}`)
-            .execute();
-
-        return { status: 'success' };
+        return this.charactersService.unban(charactersDto, accountId);
     }
 
     async getGuid(accountID: number): Promise<any[]>
@@ -188,17 +150,6 @@ export class CharactersController
             .getRepository(Characters)
             .createQueryBuilder('characters')
             .where(`account = ${accountID}`)
-            .select(['characters.guid as guid'])
-            .getRawMany();
-    }
-
-    async getDeleteAccountGuid(accountID: number): Promise<any[]>
-    {
-        const connection = getConnection('charactersConnection');
-        return await connection
-            .getRepository(Characters)
-            .createQueryBuilder('characters')
-            .where(`deleteInfos_Account = ${accountID}`)
             .select(['characters.guid as guid'])
             .getRawMany();
     }
