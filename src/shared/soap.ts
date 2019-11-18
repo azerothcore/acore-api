@@ -23,7 +23,7 @@ export class Soap
                 xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
                 xmlns:xsi="http://www.w3.org/1999/XMLSchema-instance"
                 xmlns:xsd="http://www.w3.org/1999/XMLSchema"
-                xmlns:ns1="urn:TC">
+                xmlns:ns1="${process.env.SOAP_URI}">
 
                 <SOAP-ENV:Body>
                     <ns1:executeCommand><command>${command}</command></ns1:executeCommand>
