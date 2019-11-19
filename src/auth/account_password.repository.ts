@@ -1,4 +1,4 @@
-import * as crypto from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import { EntityRepository, MoreThan, Repository } from 'typeorm';
 import { AccountPassword } from './account_password.entity';
 import { AccountDto } from './dto/account.dto';
@@ -19,9 +19,9 @@ export class AccountPasswordRepository extends Repository<AccountPassword>
         if (!account)
             throw new NotFoundException('There is no account with email address');
 
-        const resetToken: string = crypto.randomBytes(32).toString('hex');
+        const resetToken: string = randomBytes(32).toString('hex');
         const passwordResetExpires: any = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-        const passwordResetToken: string = crypto.createHash('sha256').update(resetToken).digest('hex');
+        const passwordResetToken: string = createHash('sha256').update(resetToken).digest('hex');
 
         const accountPassword = this.create();
         accountPassword.id = account.id;
@@ -47,7 +47,7 @@ export class AccountPasswordRepository extends Repository<AccountPassword>
     async resetPassword(accountPasswordDto: AccountPasswordDto, token: string): Promise<object>
     {
         const { password, passwordConfirm } = accountPasswordDto;
-        const hashedToken: string = crypto.createHash('sha256').update(token).digest('hex');
+        const hashedToken: string = createHash('sha256').update(token).digest('hex');
         const accountPassword = await this.findOne({ where: { password_reset_token: hashedToken, password_reset_expires: MoreThan(new Date()) } });
 
         if (!accountPassword)

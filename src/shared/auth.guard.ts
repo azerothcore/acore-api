@@ -1,5 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
-import * as jwt from 'jsonwebtoken';
+import { verify } from 'jsonwebtoken';
 import { Account } from '../auth/account.entity';
 import { AccountPassword } from '../auth/account_password.entity';
 import { AccountInformation } from '../auth/account_information.entity';
@@ -29,14 +29,11 @@ export class AuthGuard implements CanActivate
 
         try
         {
-            this.decoded = await jwt.verify(token, process.env.JWT_SECRET_KEY);
+            this.decoded = await verify(token, process.env.JWT_SECRET_KEY);
         }
         catch (error)
         {
-            if (this.decoded === undefined)
-                throw new UnauthorizedException('Invalid Token. Please log in again!');
-
-            if (error.name === 'JsonWebTokenError')
+            if (error.name === 'JsonWebTokenError' || this.decoded === undefined)
                 throw new UnauthorizedException('Invalid Token. Please log in again!');
 
             if (error.name === 'TokenExpiredError')

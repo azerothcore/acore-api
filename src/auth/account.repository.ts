@@ -1,4 +1,4 @@
-import * as jwt from 'jsonwebtoken';
+import { sign } from 'jsonwebtoken';
 import { EntityRepository, Repository } from 'typeorm';
 import { Account } from './account.entity';
 import { AccountDto } from './dto/account.dto';
@@ -132,7 +132,7 @@ export class AccountRepository extends Repository<Account>
 
     private static createToken(account: any, statusCode: number, response: Response): void
     {
-        const token = jwt.sign({ id: account.id }, process.env.JWT_SECRET_KEY, { expiresIn: process.env.JWT_EXPIRES_IN });
+        const token = sign({ id: account.id }, process.env.JWT_SECRET_KEY, { expiresIn: process.env.JWT_EXPIRES_IN });
 
         response.cookie('jwt', token,
         {
