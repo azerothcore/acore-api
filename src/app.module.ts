@@ -8,7 +8,8 @@ import { WebsiteModule } from './website/website.module';
 
 @Module(
 {
-    imports: [
+    imports:
+    [
         TypeOrmModule.forRoot(AuthDatabaseConfig),
         TypeOrmModule.forRoot(WorldDatabaseConfig),
         TypeOrmModule.forRoot(CharactersDatabaseConfig),

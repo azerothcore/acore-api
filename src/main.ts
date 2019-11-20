@@ -15,8 +15,10 @@ async function bootstrap()
 
     app.enableCors();
     app.use(helmet());
+
     if (process.env.NODE_ENV === 'production')
         app.use(rateLimit({ max: 100, windowMs: 60 * 60 * 1000, message: 'Too many requests from this IP, Please try again in an hour!' }));
+
     app.use(compression());
     app.use(cookieParser());
     await app.listen(port);

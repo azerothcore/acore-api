@@ -70,41 +70,6 @@ export class AuthController
         return this.authService.resetPassword(accountPasswordDto, token);
     }
 
-    @Post('/rename')
-    @UseGuards(new AuthGuard())
-    async rename(@Body() remoteDto: RemoteDto, @Account('id') accountId: number)
-    {
-        return this.authService.rename(remoteDto, accountId);
-    }
-
-    @Post('/customize')
-    @UseGuards(new AuthGuard())
-    async customize(@Body() remoteDto: RemoteDto, @Account('id') accountId: number): Promise<object>
-    {
-        return this.authService.customize(remoteDto, accountId);
-    }
-
-    @Post('/changeFaction')
-    @UseGuards(new AuthGuard())
-    async changeFaction(@Body() remoteDto: RemoteDto, @Account('id') accountId: number): Promise<object>
-    {
-        return this.authService.changeFaction(remoteDto, accountId);
-    }
-
-    @Post('/changeRace')
-    @UseGuards(new AuthGuard())
-    async changeRace(@Body() remoteDto: RemoteDto, @Account('id') accountId: number): Promise<object>
-    {
-        return this.authService.changeRace(remoteDto, accountId);
-    }
-
-    @Post('/boost')
-    @UseGuards(new AuthGuard())
-    async boost(@Body() remoteDto: RemoteDto, @Account('id') accountId: number): Promise<object>
-    {
-        return this.authService.boost(remoteDto, accountId);
-    }
-
     @Post('/profession')
     @UseGuards(new AuthGuard())
     async profession(@Body() remoteDto: RemoteDto, @Account('id') accountID: number): Promise<object>

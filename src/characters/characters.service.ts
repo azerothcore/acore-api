@@ -98,4 +98,56 @@ export class CharactersService
 
         return { status: 'success' };
     }
+
+    async rename(charactersDto: CharactersDto, accountId: number): Promise<object>
+    {
+        return this.characterCommand(charactersDto, accountId, 'rename', 5);
+    }
+
+    async customize(charactersDto: CharactersDto, accountId: number): Promise<object>
+    {
+        return this.characterCommand(charactersDto, accountId, 'customize', 5);
+    }
+
+    async changeFaction(charactersDto: CharactersDto, accountId: number): Promise<object>
+    {
+        return this.characterCommand(charactersDto, accountId, 'changeFaction', 10);
+    }
+
+    async changeRace(charactersDto: CharactersDto, accountId: number): Promise<object>
+    {
+        return this.characterCommand(charactersDto, accountId, 'changeRace', 10);
+    }
+
+    async boost(charactersDto: CharactersDto, accountId: number): Promise<object>
+    {
+        return this.characterCommand(charactersDto, accountId, 'level', 5, 80);
+    }
+
+    async unstuck(charactersDto: CharactersDto, accountId: number): Promise<object>
+    {
+        const characters = await this.charactersRepository.findOne({ select: ['guid', 'name'], where: { account: accountId } });
+
+        if (characters.guid !== charactersDto.guid)
+            throw new NotFoundException('Account with that character not found');
+
+        Soap.command(`unstuck ${characters.name} graveyard`);
+        Soap.command(`revive ${characters.name}`);
+
+        return { status: 'success' };
+    }
+
+    private async characterCommand(charactersDto: CharactersDto, accountId: number, command: string, coin: number, option?): Promise<object>
+    {
+        const characters = await this.charactersRepository.findOne({ select: ['guid'], where: { account: accountId } });
+
+        if (characters.guid !== charactersDto.guid)
+            throw new NotFoundException('Account with that character not found');
+
+        await Misc.setCoin(coin, accountId);
+
+        Soap.command(`character ${command} ${characters.name} ${option}`);
+
+        return { status: 'success' };
+    }
 }

@@ -143,6 +143,48 @@ export class CharactersController
         return this.charactersService.unban(charactersDto, accountId);
     }
 
+    @Post('/rename')
+    @UseGuards(new AuthGuard())
+    async rename(@Body() charactersDto: CharactersDto, @Account('id') accountId: number)
+    {
+        return this.charactersService.rename(charactersDto, accountId);
+    }
+
+    @Post('/customize')
+    @UseGuards(new AuthGuard())
+    async customize(@Body() charactersDto: CharactersDto, @Account('id') accountId: number): Promise<object>
+    {
+        return this.charactersService.customize(charactersDto, accountId);
+    }
+
+    @Post('/changeFaction')
+    @UseGuards(new AuthGuard())
+    async changeFaction(@Body() charactersDto: CharactersDto, @Account('id') accountId: number): Promise<object>
+    {
+        return this.charactersService.changeFaction(charactersDto, accountId);
+    }
+
+    @Post('/changeRace')
+    @UseGuards(new AuthGuard())
+    async changeRace(@Body() charactersDto: CharactersDto, @Account('id') accountId: number): Promise<object>
+    {
+        return this.charactersService.changeRace(charactersDto, accountId);
+    }
+
+    @Post('/boost')
+    @UseGuards(new AuthGuard())
+    async boost(@Body() charactersDto: CharactersDto, @Account('id') accountId: number): Promise<object>
+    {
+        return this.charactersService.boost(charactersDto, accountId);
+    }
+
+    @Post('/unstuck')
+    @UseGuards(new AuthGuard())
+    async unstuck(@Body() charactersDto: CharactersDto, @Account('id') accountId: number): Promise<object>
+    {
+        return this.charactersService.unstuck(charactersDto, accountId);
+    }
+
     async getGuid(accountID: number): Promise<any[]>
     {
         const connection = getConnection('charactersConnection');

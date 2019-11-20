@@ -9,7 +9,11 @@ import { Worldstates } from './worldstates.entity';
 
 @Module(
 {
-    imports: [TypeOrmModule.forFeature([Characters, RecoveryItem, CharacterBanned, Worldstates], 'charactersConnection')],
+    imports:
+    [
+        TypeOrmModule.forFeature([Characters, RecoveryItem, CharacterBanned, Worldstates],
+        'charactersConnection')
+    ],
     controllers: [CharactersController],
     providers: [CharactersService]
 })
