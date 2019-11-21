@@ -61,8 +61,8 @@ export class CharactersService
     {
         return await this.charactersRepository.find(
         {
-            where: { deleteInfos_Account: accountId },
-            select: ['guid', 'class', 'totaltime', 'totalKills', 'deleteInfos_Name']
+            select: ['guid', 'class', 'totaltime', 'totalKills', 'deleteInfos_Name'],
+            where: { deleteInfos_Account: accountId }
         });
     }
 
@@ -137,11 +137,11 @@ export class CharactersService
         return { status: 'success' };
     }
 
-    private async characterCommand(charactersDto: CharactersDto, accountId: number, command: string, coin: number, option?): Promise<object>
+    private async characterCommand(charactersDto: CharactersDto, accountId: number, command: string, coin: number, option?: number): Promise<object>
     {
-        const characters = await this.charactersRepository.findOne({ select: ['guid'], where: { account: accountId } });
+        const characters = await this.charactersRepository.findOne({ select: ['guid', 'name'], where: { account: accountId } });
 
-        if (characters.guid !== charactersDto.guid)
+        if (characters.guid !== +charactersDto.guid)
             throw new NotFoundException('Account with that character not found');
 
         await Misc.setCoin(coin, accountId);

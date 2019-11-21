@@ -1,8 +1,9 @@
 import { request } from 'http';
+import { Logger } from '@nestjs/common';
 
 export class Soap
 {
-    static command(command: string): void
+    static command(command: string)
     {
         const req = request(
         {
@@ -10,7 +11,12 @@ export class Soap
             port: +process.env.SOAP_PORT,
             method: 'POST',
             auth: (`${process.env.SOAP_USERNAME}:${process.env.SOAP_PASSWORD}`)
+        }, res =>
+        {
+            if (res.statusCode !== 200)
+                Logger.error(`${res.statusMessage} ${res.statusCode}`, null, 'Soap');
         });
+
         req.write(Soap.execute(command));
         req.end();
     }
