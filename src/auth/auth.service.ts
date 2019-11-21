@@ -5,8 +5,6 @@ import { AccountDto } from './dto/account.dto';
 import { AccountPasswordRepository } from './account_password.repository';
 import { AccountPasswordDto } from './dto/account_password.dto';
 import { EmailDto } from './dto/email.dto';
-import { RemoteRepository, Type } from './remote.repository';
-import { RemoteDto } from './dto/remote.dto';
 import { Request, Response } from 'express';
 
 @Injectable()
@@ -16,9 +14,7 @@ export class AuthService
         @InjectRepository(AccountRepository)
         private readonly accountRepository: AccountRepository,
         @InjectRepository(AccountPasswordRepository)
-        private readonly accountPasswordRepository: AccountPasswordRepository,
-        @InjectRepository(RemoteRepository)
-        private readonly remoteRepository: RemoteRepository
+        private readonly accountPasswordRepository: AccountPasswordRepository
     ) {}
 
     async signUp(accountDto: AccountDto, response: Response): Promise<void>
@@ -54,10 +50,5 @@ export class AuthService
     async resetPassword(accountPasswordDto: AccountPasswordDto, token: string): Promise<object>
     {
         return this.accountPasswordRepository.resetPassword(accountPasswordDto, token);
-    }
-
-    async profession(remoteDto: RemoteDto, accountId: number): Promise<object>
-    {
-        return this.remoteRepository.createRemote(remoteDto, accountId, Type.PROFESSION);
     }
 }

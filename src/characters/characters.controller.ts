@@ -184,15 +184,4 @@ export class CharactersController
     {
         return this.charactersService.unstuck(charactersDto, accountId);
     }
-
-    async getGuid(accountID: number): Promise<any[]>
-    {
-        const connection = getConnection('charactersConnection');
-        return await connection
-            .getRepository(Characters)
-            .createQueryBuilder('characters')
-            .where(`account = ${accountID}`)
-            .select(['characters.guid as guid'])
-            .getRawMany();
-    }
 }

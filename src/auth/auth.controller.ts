@@ -8,7 +8,6 @@ import { getConnection } from 'typeorm';
 import { Account as AccountEntity } from './account.entity';
 import { AccountPasswordDto } from './dto/account_password.dto';
 import { EmailDto } from './dto/email.dto';
-import { RemoteDto } from './dto/remote.dto';
 
 @Controller('auth')
 export class AuthController
@@ -68,13 +67,6 @@ export class AuthController
     async resetPassword(@Body(ValidationPipe) accountPasswordDto: AccountPasswordDto, @Param('token') token: string): Promise<object>
     {
         return this.authService.resetPassword(accountPasswordDto, token);
-    }
-
-    @Post('/profession')
-    @UseGuards(new AuthGuard())
-    async profession(@Body() remoteDto: RemoteDto, @Account('id') accountID: number): Promise<object>
-    {
-        return this.authService.profession(remoteDto, accountID);
     }
 
     @Get('/pulse/:days')
