@@ -24,12 +24,12 @@ export class CharactersService
         private readonly worldstatesRepository: Repository<Worldstates>,
     ) {}
 
-    async search_worldstates(param: Worldstates)
+    async search_worldstates(param: Worldstates): Promise<object>
     {
         return await this.worldstatesRepository.find({ comment: Like(`%${param.comment}%`) });
     }
 
-    async recoveryItemList(guid: number, accountID: number)
+    async recoveryItemList(guid: number, accountID: number): Promise<object>
     {
         const characters = await this.charactersRepository.findOne({ select: ['guid'], where: { account: accountID } });
 

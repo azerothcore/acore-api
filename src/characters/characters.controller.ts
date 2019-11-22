@@ -103,14 +103,14 @@ export class CharactersController
     }
 
     @Get('search/worldstates')
-    async search_worldstates(@Query() param: Worldstates)
+    async search_worldstates(@Query() param: Worldstates): Promise<object>
     {
         return this.charactersService.search_worldstates(param);
     }
 
     @Get('/recoveryItemList/:guid')
     @UseGuards(new AuthGuard())
-    async recoveryItemList(@Param('guid') guid: number, @Account('id') accountId: number)
+    async recoveryItemList(@Param('guid') guid: number, @Account('id') accountId: number): Promise<object>
     {
         return this.charactersService.recoveryItemList(guid, accountId);
     }

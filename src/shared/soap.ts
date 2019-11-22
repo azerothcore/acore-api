@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 
 export class Soap
 {
-    static command(command: string)
+    static command(command: string): void
     {
         const req = request(
         {
