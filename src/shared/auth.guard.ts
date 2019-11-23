@@ -17,7 +17,7 @@ export class AuthGuard implements CanActivate
 
     private async validateToken(request: any): Promise<boolean>
     {
-        let token;
+        let token: string;
 
         if (request.headers.authorization && request.headers.authorization.startsWith('Bearer'))
             token = request.headers.authorization.split(' ')[1];
@@ -29,7 +29,7 @@ export class AuthGuard implements CanActivate
 
         try
         {
-            this.decoded = await verify(token, process.env.JWT_SECRET_KEY);
+            this.decoded = verify(token, process.env.JWT_SECRET_KEY);
         }
         catch (error)
         {
@@ -48,9 +48,9 @@ export class AuthGuard implements CanActivate
         if (!accountExists)
             throw new UnauthorizedException('The account belonging to this token does no longer exist.');
 
-        accountExists.sha_pass_hash = undefined;
-        accountExists.v = undefined;
-        accountExists.s = undefined;
+        delete accountExists.sha_pass_hash;
+        delete accountExists.v;
+        delete accountExists.s;
 
         const accountPassword = await AccountPassword.findOne({ where: { id: this.decoded.id } });
 

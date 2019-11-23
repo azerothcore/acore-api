@@ -27,19 +27,19 @@ export class AuthService
         return this.accountRepository.signIn(accountDto, response);
     }
 
-    async updatePassword(accountPasswordDto: AccountPasswordDto, response: Response, accountID: number): Promise<void>
+    async updatePassword(accountPasswordDto: AccountPasswordDto, response: Response, accountId: number): Promise<void>
     {
-        return this.accountRepository.updatePassword(accountPasswordDto, response, accountID);
+        return this.accountRepository.updatePassword(accountPasswordDto, response, accountId);
     }
 
-    async updateEmail(emailDto: EmailDto, accountID: number): Promise<object>
+    async updateEmail(emailDto: EmailDto, accountId: number): Promise<object>
     {
-        return this.accountRepository.updateEmail(emailDto, accountID);
+        return this.accountRepository.updateEmail(emailDto, accountId);
     }
 
-    async unban(accountID: number): Promise<object>
+    async unban(accountId: number): Promise<object>
     {
-        return this.accountRepository.unban(accountID);
+        return this.accountRepository.unban(accountId);
     }
 
     async forgotPassword(accountDto: AccountDto, request: Request): Promise<object>

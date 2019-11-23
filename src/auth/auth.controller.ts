@@ -38,23 +38,23 @@ export class AuthController
     async updatePassword(
         @Body(ValidationPipe) accountPasswordDto: AccountPasswordDto,
         @Res() response: Response,
-        @Account('id') accountID: number): Promise<void>
+        @Account('id') accountId: number): Promise<void>
     {
-        return this.authService.updatePassword(accountPasswordDto, response, accountID);
+        return this.authService.updatePassword(accountPasswordDto, response, accountId);
     }
 
     @Patch('/updateMyEmail')
     @UseGuards(new AuthGuard())
-    async updateEmail(@Body(ValidationPipe) emailDto: EmailDto, @Account('id') accountID: number): Promise<object>
+    async updateEmail(@Body(ValidationPipe) emailDto: EmailDto, @Account('id') accountId: number): Promise<object>
     {
-        return this.authService.updateEmail(emailDto, accountID);
+        return this.authService.updateEmail(emailDto, accountId);
     }
 
     @Patch('/unban')
     @UseGuards(new AuthGuard())
-    async unban(@Account('id') accountID: number): Promise<object>
+    async unban(@Account('id') accountId: number): Promise<object>
     {
-        return this.authService.unban(accountID);
+        return this.authService.unban(accountId);
     }
 
     @Post('/forgotPassword')
@@ -70,16 +70,13 @@ export class AuthController
     }
 
     @Get('/pulse/:days')
-    async pulse(@Param('days') days: number)
+    async pulse(@Param('days') days: number): Promise<AccountEntity[]>
     {
-       return await getConnection()
-          .getRepository(AccountEntity)
-          .createQueryBuilder('auth')
-          .select([
-            'COUNT(*) AS accounts',
-            'COUNT(DISTINCT(last_ip)) AS IPs'
-          ])
-          .where('DATEDIFF(NOW(), last_login) < ' + days)
-          .getRawMany();
+        return await getConnection()
+            .getRepository(AccountEntity)
+            .createQueryBuilder('auth')
+            .select(['COUNT(*) AS accounts', 'COUNT(DISTINCT(last_ip)) AS IPs'])
+            .where('DATEDIFF(NOW(), last_login) < ' + days)
+            .getRawMany();
     }
 }

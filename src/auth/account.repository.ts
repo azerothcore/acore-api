@@ -59,7 +59,7 @@ export class AccountRepository extends Repository<Account>
 
     async signIn(accountDto: AccountDto, response: Response): Promise<void>
     {
-        const { username, password }: { username: string, password: string } = accountDto;
+        const { username, password } = accountDto;
         const account = await this.findOne({ where: { username } });
 
         if (!account || (await Misc.hashPassword(username, password)) !== account.sha_pass_hash)
@@ -68,10 +68,10 @@ export class AccountRepository extends Repository<Account>
         AccountRepository.createToken(account, HttpStatus.OK, response);
     }
 
-    async updatePassword(accountPasswordDto: AccountPasswordDto, response: Response, accountID: number): Promise<void>
+    async updatePassword(accountPasswordDto: AccountPasswordDto, response: Response, accountId: number): Promise<void>
     {
         const { passwordCurrent, password, passwordConfirm } = accountPasswordDto;
-        const account = await this.findOne({ where: { id: accountID } });
+        const account = await this.findOne({ where: { id: accountId } });
 
         if ((await Misc.hashPassword(account.username, passwordCurrent)) !== account.sha_pass_hash)
             throw new UnauthorizedException('Your current password is wrong!');
@@ -92,10 +92,10 @@ export class AccountRepository extends Repository<Account>
         AccountRepository.createToken(account, HttpStatus.OK, response);
     }
 
-    async updateEmail(emailDto: EmailDto, accountID: number): Promise<object>
+    async updateEmail(emailDto: EmailDto, accountId: number): Promise<object>
     {
         const { password, emailCurrent, email, emailConfirm } = emailDto;
-        const account = await this.findOne({ where: { id: accountID } });
+        const account = await this.findOne({ where: { id: accountId } });
 
         if (emailCurrent.toUpperCase() !== account.reg_mail)
             throw new BadRequestException('Your current email is wrong!');
@@ -115,14 +115,14 @@ export class AccountRepository extends Repository<Account>
         return { status: 'success', message: 'Your email has been changed successfully!' };
     }
 
-    async unban(accountID: number): Promise<object>
+    async unban(accountId: number): Promise<object>
     {
-        const accountBanned = await AccountBanned.findOne({ where: { id: accountID, active: 1 } });
+        const accountBanned = await AccountBanned.findOne({ where: { id: accountId, active: 1 } });
 
         if (!accountBanned)
             throw new BadRequestException('Your account is not ban!');
 
-        await Misc.setCoin(10, accountID);
+        await Misc.setCoin(10, accountId);
 
         accountBanned.active = 0;
         await accountBanned.save();
@@ -140,9 +140,9 @@ export class AccountRepository extends Repository<Account>
             httpOnly: true
         });
 
-        account.sha_pass_hash = undefined;
-        account.v = undefined;
-        account.s = undefined;
+        delete account.sha_pass_hash;
+        delete account.v;
+        delete account.s;
 
         response.status(statusCode).json({ status: 'success', token, account });
     }

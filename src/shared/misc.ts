@@ -4,9 +4,9 @@ import { createHash } from 'crypto';
 
 export class Misc
 {
-    static async setCoin(coin: number, accountID: number): Promise<void>
+    static async setCoin(coin: number, accountId: number): Promise<void>
     {
-        const accountInformation = await AccountInformation.findOne({ where: { id: accountID } });
+        const accountInformation = await AccountInformation.findOne({ where: { id: accountId } });
 
         if (!accountInformation || accountInformation.coins < coin)
             throw new BadRequestException(`You dont have enough coin (${coin})`);

@@ -12,6 +12,7 @@ import { AuthGuard } from '../shared/auth.guard';
 import { Account } from '../auth/account.decorator';
 import { RecoveryItemDTO } from './dto/recovery_item.dto';
 import { CharactersDto } from './dto/characters.dto';
+import { RecoveryItem } from './recovery_item.entity';
 
 @Controller('characters')
 export class CharactersController
@@ -103,14 +104,14 @@ export class CharactersController
     }
 
     @Get('search/worldstates')
-    async search_worldstates(@Query() param: Worldstates): Promise<object>
+    async search_worldstates(@Query() param: Worldstates): Promise<Worldstates[]>
     {
         return this.charactersService.search_worldstates(param);
     }
 
     @Get('/recoveryItemList/:guid')
     @UseGuards(new AuthGuard())
-    async recoveryItemList(@Param('guid') guid: number, @Account('id') accountId: number): Promise<object>
+    async recoveryItemList(@Param('guid') guid: number, @Account('id') accountId: number): Promise<RecoveryItem[]>
     {
         return this.charactersService.recoveryItemList(guid, accountId);
     }
@@ -124,7 +125,7 @@ export class CharactersController
 
     @Get('/recoveryHeroList')
     @UseGuards(new AuthGuard())
-    async recoveryHeroList(@Account('id') accountId: number): Promise<object>
+    async recoveryHeroList(@Account('id') accountId: number): Promise<Characters[]>
     {
         return this.charactersService.recoveryHeroList(accountId);
     }

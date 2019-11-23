@@ -24,14 +24,14 @@ export class CharactersService
         private readonly worldstatesRepository: Repository<Worldstates>,
     ) {}
 
-    async search_worldstates(param: Worldstates): Promise<object>
+    async search_worldstates(param: Worldstates): Promise<Worldstates[]>
     {
         return await this.worldstatesRepository.find({ comment: Like(`%${param.comment}%`) });
     }
 
-    async recoveryItemList(guid: number, accountID: number): Promise<object>
+    async recoveryItemList(guid: number, accountId: number): Promise<RecoveryItem[]>
     {
-        const characters = await this.charactersRepository.findOne({ select: ['guid'], where: { account: accountID } });
+        const characters = await this.charactersRepository.findOne({ select: ['guid'], where: { account: accountId } });
 
         if (characters.guid !== +guid)
             throw new NotFoundException('Account with that character not found');
@@ -57,7 +57,7 @@ export class CharactersService
         return { status: 'success' };
     }
 
-    async recoveryHeroList(accountId: number): Promise<object>
+    async recoveryHeroList(accountId: number): Promise<Characters[]>
     {
         return await this.charactersRepository.find(
         {
