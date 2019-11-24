@@ -31,7 +31,7 @@
         "@nestjs/platform-express": "6.8.4",
         "@nestjs/typeorm": "6.2.0",
         "class-transformer": "0.2.3",
-        "class-validator": "0.10.2",
+        "class-validator": "0.11.0",
         "compression": "1.7.4",
         "cookie-parser": "1.4.4",
         "dotenv": "8.2.0",
