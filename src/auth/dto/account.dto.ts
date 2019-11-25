@@ -1,4 +1,4 @@
-import { IsEmail, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsPhoneNumber, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
 export class AccountDto
 {
@@ -17,6 +17,7 @@ export class AccountDto
     @IsString()
     readonly lastName: string;
 
+    @IsPhoneNumber('ZZ')
     @MaxLength(25)
     readonly phone: string;
 
