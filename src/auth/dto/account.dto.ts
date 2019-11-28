@@ -18,7 +18,6 @@ export class AccountDto
     readonly lastName: string;
 
     @IsPhoneNumber('ZZ')
-    @MaxLength(25)
     readonly phone: string;
 
     @IsString()
