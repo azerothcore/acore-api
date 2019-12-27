@@ -43,7 +43,7 @@
         "nodemailer": "6.4.2",
         "reflect-metadata": "0.1.13",
         "rimraf": "3.0.0",
-        "rxjs": "6.5.3",
+        "rxjs": "6.5.4",
         "serialize-javascript": "2.1.2",
         "typeorm": "0.2.20"
     },
