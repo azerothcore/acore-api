@@ -44,7 +44,7 @@
         "reflect-metadata": "0.1.13",
         "rimraf": "3.0.0",
         "rxjs": "6.5.4",
-        "serialize-javascript": "2.1.2",
+        "serialize-javascript": "3.0.0",
         "typeorm": "0.2.22"
     },
     "devDependencies": {
