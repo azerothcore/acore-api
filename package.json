@@ -29,7 +29,7 @@
         "@nestjs/common": "6.11.6",
         "@nestjs/core": "6.11.6",
         "@nestjs/platform-express": "6.11.6",
-        "@nestjs/typeorm": "6.3.1",
+        "@nestjs/typeorm": "6.3.4",
         "class-transformer": "0.2.3",
         "class-validator": "0.11.0",
         "compression": "1.7.4",
