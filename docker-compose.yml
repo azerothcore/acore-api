@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  #nestJS api
+  ac-api:
+    image: azerothcore/api
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: ./.docker/app/Dockerfile
+      target: development
+    user: "node"
+    working_dir: /usr/src/app
+    environment:
+      - NODE_ENV=${NODE_ENV:-dev}
+      - VERSION=1.0
+    volumes:
+      - .:/usr/src/app
+      - /usr/app/node_modules
+    ports:
+      - ${WEBSITE_PORT:-3000}:3000
+    tty: true
+    command: npm run start:dev
+    networks:
+      - azeroth-network
+  
+  # database
+  ac-website-database:
+    image: azerothcore/website-database
+    build:
+      context: .
+      dockerfile: ./.docker/database/Dockerfile
+    ports: 
+      - '${WEB_SITE_EXTERNAL_PORT:-3307}:3306'
+    environment:
+      - MYSQL_ROOT_PASSWORD=${WEB_SITE_DATABASE_PASSWORD:-password}
+      - MYSQL_DATABASE=${WEB_SITE_DATABASE_NAME}
+      - MYSQL_USER=${WEB_SITE_DATABASE_USERNAME}
+      - MYSQL_PASSWORD=${WEB_SITE_DATABASE_PASSWORD}
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    networks:
+        - azeroth-network
+
+networks:
+  azeroth-network:
+    external:
+      name: azeroth-network
