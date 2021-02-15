@@ -43,6 +43,21 @@ export class CharactersController
             .getRawMany();
     }
 
+
+    /* characters statistics */
+    @Get('/stats')
+    async characters_stats()
+    {
+        const connection = getConnection('charactersConnection');
+        return await connection
+            .getRepository(Characters)
+            .createQueryBuilder('characters')
+            .select(['characters.race as race',
+                     'characters.class as class'])
+            .getRawMany();
+    }
+
+
     /* Arena routes */
 
     @Get('/arena_team/id/:arenaTeamId')
