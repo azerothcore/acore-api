@@ -13,6 +13,7 @@ import { Account } from '../auth/account.decorator';
 import { RecoveryItemDTO } from './dto/recovery_item.dto';
 import { CharactersDto } from './dto/characters.dto';
 import { RecoveryItem } from './recovery_item.entity';
+import { BattlegroundDeserters } from './battleground_deserters.entity';
 
 @Controller('characters')
 export class CharactersController
@@ -57,6 +58,42 @@ export class CharactersController
             .getRawMany();
     }
 
+
+    /* battleground_deserters */
+    @Get('/battleground_deserters/:count')
+    async battleground_deserters(@Param('count') count: number, @Query() query)
+    {
+        let from = 0;
+        let where = "";
+
+        if (!!query['from']) {
+            from = query['from'];
+        }
+
+        if (!!query['name']) {
+            where = `UPPER(name) LIKE UPPER('%${query['name']}%')`;
+        }
+
+        const connection = getConnection('charactersConnection');
+        return await connection
+            .getRepository(BattlegroundDeserters)
+            .createQueryBuilder('battleground_deserters')
+            .innerJoinAndSelect(Characters, 'c', 'c.guid = battleground_deserters.guid')
+            .select([
+                'battleground_deserters.*',
+                'c.guid AS guid',
+                'c.name AS name',
+                'c.level AS level',
+                'c.race AS race',
+                'c.class AS class',
+                'c.gender AS gender',
+            ])
+            .where(where)
+            .orderBy({ 'battleground_deserters.datetime': 'DESC' })
+            .offset(from)
+            .limit(count)
+            .getRawMany();
+    }
 
     /* Arena routes */
 
