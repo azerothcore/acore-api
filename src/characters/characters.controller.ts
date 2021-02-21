@@ -81,6 +81,7 @@ export class CharactersController
             .innerJoinAndSelect(Characters, 'c', 'c.guid = battleground_deserters.guid')
             .select([
                 'battleground_deserters.*',
+                'c.account as account',
                 'c.guid AS guid',
                 'c.name AS name',
                 'c.level AS level',
