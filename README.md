@@ -6,6 +6,7 @@ This API support these tools:
 - [ServerStatus](https://github.com/azerothcore/server-status/)
 - [ArenaStats](https://github.com/azerothcore/arena-stats)
 - [BG Queue Abuser Viewer](https://github.com/Helias/BG-Queue-Abuser-Viewer)
+- [WoW Statistics](https://github.com/azerothcore/wow-statistics)
 
 ### Requirements
 
