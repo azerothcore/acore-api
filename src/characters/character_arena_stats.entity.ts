@@ -1,17 +1,16 @@
 import { BaseEntity, Column, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity({ synchronize: false })
-export class CharacterArenaStats extends BaseEntity
-{
-    @PrimaryColumn()
-    guid: number;
+export class CharacterArenaStats extends BaseEntity {
+  @PrimaryColumn()
+  guid: number;
 
-    @PrimaryColumn()
-    slot: number;
+  @PrimaryColumn()
+  slot: number;
 
-    @Column()
-    matchMakerRating: number;
+  @Column()
+  matchMakerRating: number;
 
-    @Column()
-    maxMMR: number;
+  @Column()
+  maxMMR: number;
 }
