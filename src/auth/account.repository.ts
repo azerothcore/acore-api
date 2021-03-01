@@ -98,11 +98,13 @@ export class AccountRepository extends Repository<Account> {
     if (
       (await Misc.hashPassword(account.username, passwordCurrent)) !==
       account.sha_pass_hash
-    )
+    ) {
       throw new UnauthorizedException(['Your current password is wrong!']);
+    }
 
-    if (passwordConfirm !== password)
+    if (passwordConfirm !== password) {
       throw new BadRequestException(['Password does not match']);
+    }
 
     account.v = '0';
     account.s = '0';
@@ -155,7 +157,7 @@ export class AccountRepository extends Repository<Account> {
     });
 
     if (!accountBanned) {
-      throw new BadRequestException(['Your account is not ban!']);
+      throw new BadRequestException(['Your account is not banned!']);
     }
 
     await Misc.setCoin(10, accountId);

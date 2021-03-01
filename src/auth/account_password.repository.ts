@@ -58,6 +58,7 @@ export class AccountPasswordRepository extends Repository<AccountPassword> {
     const hashedToken: string = createHash('sha256')
       .update(token)
       .digest('hex');
+
     const accountPassword = await this.findOne({
       where: {
         password_reset_token: hashedToken,
@@ -76,6 +77,7 @@ export class AccountPasswordRepository extends Repository<AccountPassword> {
     const account = await Account.findOne({
       where: { id: accountPassword.id },
     });
+
     account.v = '0';
     account.s = '0';
     account.sha_pass_hash = await Misc.hashPassword(account.username, password);

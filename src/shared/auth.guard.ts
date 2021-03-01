@@ -27,7 +27,9 @@ export class AuthGuard implements CanActivate {
       request.headers.authorization.startsWith('Bearer')
     )
       token = request.headers.authorization.split(' ')[1];
-    else if (request.cookies.jwt) token = request.cookies.jwt;
+    else if (request.cookies.jwt) {
+      token = request.cookies.jwt;
+    }
 
     if (!token) {
       throw new UnauthorizedException([

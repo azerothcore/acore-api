@@ -11,8 +11,9 @@ export class Soap {
         auth: `${process.env.SOAP_USERNAME}:${process.env.SOAP_PASSWORD}`,
       },
       (res) => {
-        if (res.statusCode !== 200)
+        if (res.statusCode !== 200) {
           Logger.error(`${res.statusMessage} ${res.statusCode}`, null, 'Soap');
+        }
       },
     );
 
