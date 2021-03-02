@@ -1,4 +1,3 @@
-export class CharactersDto
-{
-    readonly guid: number;
+export class CharactersDto {
+  readonly guid: number;
 }

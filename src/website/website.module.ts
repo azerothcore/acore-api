@@ -5,8 +5,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PostRepository } from './post.repository';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([PostRepository], 'websiteConnection')],
-    controllers: [WebsiteController],
-    providers: [WebsiteService],
+  imports: [TypeOrmModule.forFeature([PostRepository], 'websiteConnection')],
+  controllers: [WebsiteController],
+  providers: [WebsiteService],
 })
 export class WebsiteModule {}

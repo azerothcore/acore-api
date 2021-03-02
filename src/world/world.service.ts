@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class WorldService
-{
-    // TODO
+export class WorldService {
+  // TODO
 }

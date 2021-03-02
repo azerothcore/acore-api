@@ -7,14 +7,14 @@ import { RecoveryItem } from './recovery_item.entity';
 import { CharacterBanned } from './character_banned.entity';
 import { Worldstates } from './worldstates.entity';
 
-@Module(
-{
-    imports:
-    [
-        TypeOrmModule.forFeature([Characters, RecoveryItem, CharacterBanned, Worldstates],
-        'charactersConnection')
-    ],
-    controllers: [CharactersController],
-    providers: [CharactersService]
+@Module({
+  imports: [
+    TypeOrmModule.forFeature(
+      [Characters, RecoveryItem, CharacterBanned, Worldstates],
+      'charactersConnection',
+    ),
+  ],
+  controllers: [CharactersController],
+  providers: [CharactersService],
 })
 export class CharactersModule {}

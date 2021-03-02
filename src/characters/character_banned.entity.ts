@@ -1,23 +1,22 @@
 import { BaseEntity, Column, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity({ synchronize: false })
-export class CharacterBanned extends BaseEntity
-{
-    @PrimaryColumn()
-    guid: number;
+export class CharacterBanned extends BaseEntity {
+  @PrimaryColumn()
+  guid: number;
 
-    @PrimaryColumn()
-    bandate: number;
+  @PrimaryColumn()
+  bandate: number;
 
-    @Column()
-    unbandate: number;
+  @Column()
+  unbandate: number;
 
-    @Column()
-    bannedby: string;
+  @Column()
+  bannedby: string;
 
-    @Column()
-    banreason: string;
+  @Column()
+  banreason: string;
 
-    @Column()
-    active: number;
+  @Column()
+  active: number;
 }

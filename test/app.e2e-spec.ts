@@ -1,47 +1,24 @@
-import 'dotenv/config';
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { AccountDto } from '../src/auth/dto/account.dto';
-import { HttpStatus } from '@nestjs/common';
+import { AppModule } from './../src/app.module';
 
-const app = 'http://localhost:3000';
+describe('AppController (e2e)', () => {
+  let app: INestApplication;
 
-describe('Auth', () =>
-{
-    const account: AccountDto =
-    {
-        username: 'AzerothJS',
-        firstName: 'Azeroth',
-        lastName: 'API',
-        phone: '+989171111111',
-        password: 'Azer0thjs!@',
-        passwordConfirm: 'Azer0thjs!@',
-        email: 'Azeroth@Example.com'
-    };
+  beforeEach(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
 
-    it('Should SignUp Account', () =>
-    {
-        return request(app)
-            .post('/auth/signup')
-            .set('Accept', 'application/json')
-            .send(account)
-            .expect(HttpStatus.CREATED);
-    });
+    app = moduleFixture.createNestApplication();
+    await app.init();
+  });
 
-    it('Should Reject Duplicate Account, Email, Phone', () =>
-    {
-        return request(app)
-            .post('/auth/signup')
-            .set('Accept', 'application/json')
-            .send(account)
-            .expect(HttpStatus.CONFLICT);
-    });
-
-    it('Should SignIn Account', () =>
-    {
-        return request(app)
-            .post('/auth/signin')
-            .set('Accept', 'application/json')
-            .send({ username: account.username, password: account.password })
-            .expect(HttpStatus.OK);
-    });
+  it('/ (GET)', () => {
+    return request(app.getHttpServer())
+      .get('/')
+      .expect(200)
+      .expect('Hello World!');
+  });
 });
