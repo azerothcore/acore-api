@@ -61,7 +61,7 @@ export class CharactersController {
     return await connection
       .getRepository(Characters)
       .createQueryBuilder('characters')
-      .select(['characters.race as race', 'characters.class as class'])
+      .select(['characters.race as race', 'characters.class as class', 'characters.level as level'])
       .getRawMany();
   }
 
