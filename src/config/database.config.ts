@@ -36,6 +36,18 @@ export const CharactersDatabaseConfig: TypeOrmModuleOptions = {
   synchronize: true,
 };
 
+export const ElunaDatabaseConfig: TypeOrmModuleOptions = {
+  name: 'elunaConnection',
+  type: 'mysql',
+  host: process.env.ELUNA_DATABASE_HOST,
+  port: +process.env.ELUNA_DATABASE_PORT,
+  username: process.env.ELUNA_DATABASE_USERNAME,
+  password: process.env.ELUNA_DATABASE_PASSWORD,
+  database: process.env.ELUNA_DATABASE_NAME,
+  entities: [join(__dirname, '..', 'eluna', '*.entity.{js, ts}')],
+  synchronize: true,
+};
+
 export const WebsiteDatabaseConfig: TypeOrmModuleOptions = {
   name: 'websiteConnection',
   type: 'mysql',
