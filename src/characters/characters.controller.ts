@@ -24,6 +24,7 @@ import { RecoveryItemDTO } from './dto/recovery_item.dto';
 import { CharactersDto } from './dto/characters.dto';
 import { RecoveryItem } from './recovery_item.entity';
 import { BattlegroundDeserters } from './battleground_deserters.entity';
+import { AccountAccess } from '../auth/account_access.entity';
 
 @Controller('characters')
 export class CharactersController {
@@ -31,13 +32,23 @@ export class CharactersController {
 
   @Get('/online')
   async online() {
+
+    const accountGMs = await getConnection('authConnection')
+      .getRepository(AccountAccess)
+      .createQueryBuilder('account_access')
+      .select(['id'])
+      .where('gmlevel > 0')
+      .getRawMany();
+
+    const GmIds = accountGMs.map(aa => aa.id);
+
     const connection = getConnection('charactersConnection');
-    return await connection
+    const characters = await connection
       .getRepository(Characters)
       .createQueryBuilder('characters')
       .leftJoinAndSelect(GuildMember, 'gm', 'gm.guid = characters.guid')
       .leftJoinAndSelect(Guild, 'g', 'g.guildid = gm.guildid')
-      .where('online = 1')
+      .where('online = 1 AND account NOT IN (' + GmIds.join(',') + ')')
       .select([
         'characters.guid as guid',
         'characters.name as name',
@@ -52,6 +63,8 @@ export class CharactersController {
         'g.name as guildName',
       ])
       .getRawMany();
+
+      return characters;
   }
 
   /* characters statistics */

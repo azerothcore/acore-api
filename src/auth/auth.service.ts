@@ -11,9 +11,9 @@ import { Request, Response } from 'express';
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(AccountRepository)
+    @InjectRepository(AccountRepository, 'authConnection')
     private readonly accountRepository: AccountRepository,
-    @InjectRepository(AccountPasswordRepository)
+    @InjectRepository(AccountPasswordRepository, 'authConnection')
     private readonly accountPasswordRepository: AccountPasswordRepository,
   ) {}
 
