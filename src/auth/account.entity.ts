@@ -9,14 +9,11 @@ export class Account extends BaseEntity {
   username: string;
 
   @Column()
-  sha_pass_hash: string;
+  salt: Buffer;
+
+  @Column()
+  verifier: Buffer;
 
   @Column()
   reg_mail: string;
-
-  @Column()
-  v: string;
-
-  @Column()
-  s: string;
 }

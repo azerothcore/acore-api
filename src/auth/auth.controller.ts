@@ -98,7 +98,7 @@ export class AuthController {
 
   @Get('/pulse/:days')
   async pulse(@Param('days') days: number): Promise<AccountEntity[]> {
-    return await getConnection("authConnection")
+    return await getConnection('authConnection')
       .getRepository(AccountEntity)
       .createQueryBuilder('auth')
       .select(['COUNT(*) AS accounts', 'COUNT(DISTINCT(last_ip)) AS IPs'])

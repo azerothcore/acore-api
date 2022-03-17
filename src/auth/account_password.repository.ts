@@ -78,9 +78,7 @@ export class AccountPasswordRepository extends Repository<AccountPassword> {
       where: { id: accountPassword.id },
     });
 
-    account.v = '0';
-    account.s = '0';
-    account.sha_pass_hash = await Misc.hashPassword(account.username, password);
+    account.verifier = Misc.calculateSRP6Verifier(account.username, password);
     await account.save();
 
     accountPassword.password_changed_at = new Date(Date.now() - 1000);
