@@ -48,7 +48,7 @@ export class AccountRepository extends Repository<Account> {
     }
 
     account.username = username.toUpperCase();
-    account.sha_pass_hash = await Misc.hashPassword(username, password);
+    account.verifier = Misc.calculateSRP6Verifier(username, password);
     account.reg_mail = email.toUpperCase();
 
     try {
@@ -79,7 +79,7 @@ export class AccountRepository extends Repository<Account> {
 
     if (
       !account ||
-      (await Misc.hashPassword(username, password)) !== account.sha_pass_hash
+      !Misc.verifySRP6(username, password, account.salt, account.verifier)
     ) {
       throw new UnauthorizedException(['Incorrect username or password']);
     }
@@ -96,8 +96,12 @@ export class AccountRepository extends Repository<Account> {
     const account = await this.findOne({ where: { id: accountId } });
 
     if (
-      (await Misc.hashPassword(account.username, passwordCurrent)) !==
-      account.sha_pass_hash
+      !Misc.verifySRP6(
+        account.username,
+        passwordCurrent,
+        account.salt,
+        account.verifier,
+      )
     ) {
       throw new UnauthorizedException(['Your current password is wrong!']);
     }
@@ -106,9 +110,7 @@ export class AccountRepository extends Repository<Account> {
       throw new BadRequestException(['Password does not match']);
     }
 
-    account.v = '0';
-    account.s = '0';
-    account.sha_pass_hash = await Misc.hashPassword(account.username, password);
+    account.verifier = Misc.calculateSRP6Verifier(account.username, password);
     await account.save();
 
     const accountPassword = new AccountPassword();
@@ -136,8 +138,12 @@ export class AccountRepository extends Repository<Account> {
     }
 
     if (
-      (await Misc.hashPassword(account.username, password)) !==
-      account.sha_pass_hash
+      !Misc.verifySRP6(
+        account.username,
+        password,
+        account.salt,
+        account.verifier,
+      )
     ) {
       throw new UnauthorizedException(['Your current password is wrong!']);
     }
@@ -177,9 +183,8 @@ export class AccountRepository extends Repository<Account> {
       expiresIn: process.env.JWT_EXPIRES_IN,
     });
 
-    delete account.sha_pass_hash;
-    delete account.v;
-    delete account.s;
+    delete account.salt;
+    delete account.verifier;
 
     response.status(statusCode).json({ status: 'success', token, account });
   }
