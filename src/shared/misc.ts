@@ -61,9 +61,6 @@ export class Misc {
     salt: Buffer,
     verifier: Buffer,
   ): boolean {
-    if (!username || !password) {
-      console.log(username, password);
-    }
     const generated: Buffer = this.calculateSRP6Verifier(
       username,
       password,
