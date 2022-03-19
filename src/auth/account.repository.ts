@@ -64,7 +64,7 @@ export class AccountRepository extends Repository<Account> {
     account.username = username.toUpperCase();
     account.salt = salt;
     account.verifier = verifier;
-    account.reg_mail = email;
+    account.reg_mail = email.toUpperCase();
 
     try {
       await this.save(account);
@@ -145,15 +145,15 @@ export class AccountRepository extends Repository<Account> {
     const { password, emailCurrent, email, emailConfirm } = emailDto;
     const account = await this.findOne({ where: { id: accountId } });
 
-    if (emailCurrent !== account.reg_mail) {
+    if (emailCurrent.toUpperCase() !== account.reg_mail) {
       throw new BadRequestException(['Your current email is wrong!']);
     }
 
-    if (emailConfirm !== email.toUpperCase()) {
+    if (emailConfirm.toUpperCase() !== email.toUpperCase()) {
       throw new BadRequestException(['Email does not match']);
     }
 
-    if (email === account.reg_mail) {
+    if (email.toUpperCase() === account.reg_mail) {
       throw new ConflictException(['That email address already exists']);
     }
 
@@ -168,7 +168,7 @@ export class AccountRepository extends Repository<Account> {
       throw new UnauthorizedException(['Your current password is wrong!']);
     }
 
-    account.reg_mail = email;
+    account.reg_mail = email.toUpperCase();
     await this.save(account);
 
     return {
