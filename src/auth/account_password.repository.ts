@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'crypto';
-import { EntityRepository, MoreThan, Repository } from 'typeorm';
+import { EntityRepository, getRepository, MoreThan, Repository } from 'typeorm';
 
 import { AccountPassword } from './account_password.entity';
 import { AccountDto } from './dto/account.dto';
@@ -16,8 +16,12 @@ import { Misc } from '../shared/misc';
 
 @EntityRepository(AccountPassword)
 export class AccountPasswordRepository extends Repository<AccountPassword> {
+  private accountRepo = getRepository(Account, 'authConnection');
+
   async forgotPassword(accountDto: AccountDto, request: Request) {
-    const account = await Account.findOne({ reg_mail: accountDto.email });
+    const account = await this.accountRepo.findOne({
+      reg_mail: accountDto.email,
+    });
 
     if (!account) {
       throw new NotFoundException(['There is no account with email address']);
@@ -35,7 +39,7 @@ export class AccountPasswordRepository extends Repository<AccountPassword> {
     accountPassword.id = account.id;
     accountPassword.password_reset_expires = passwordResetExpires;
     accountPassword.password_reset_token = passwordResetToken;
-    await accountPassword.save();
+    await this.save(accountPassword);
 
     try {
       const resetURL = `${request.protocol}://${request.get(
@@ -74,17 +78,21 @@ export class AccountPasswordRepository extends Repository<AccountPassword> {
       throw new BadRequestException(['Password does not match']);
     }
 
-    const account = await Account.findOne({
+    const account = await this.accountRepo.findOne({
       where: { id: accountPassword.id },
     });
 
-    account.verifier = Misc.calculateSRP6Verifier(account.username, password);
-    await account.save();
+    account.verifier = Misc.calculateSRP6Verifier(
+      account.username,
+      password,
+      account.salt,
+    );
+    await this.accountRepo.save(account);
 
     accountPassword.password_changed_at = new Date(Date.now() - 1000);
     accountPassword.password_reset_expires = null;
     accountPassword.password_reset_token = null;
-    await accountPassword.save();
+    await this.save(accountPassword);
 
     return {
       status: 'success',

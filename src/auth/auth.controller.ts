@@ -76,7 +76,7 @@ export class AuthController {
 
   @Patch('/unban')
   @UseGuards(new AuthGuard())
-  async unban(@Account('id') accountId: number): Promise<object> {
+  async unban(@Account('id') accountId: number): Promise<{ status: string }> {
     return this.authService.unban(accountId);
   }
 

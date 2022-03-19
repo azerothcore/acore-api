@@ -24,10 +24,13 @@ export class AccountRepository extends Repository<Account> {
     AccountInformation,
     'authConnection',
   );
+
   private accountPasswordRepo = getRepository(
     AccountPassword,
     'authConnection',
   );
+
+  private accountBannedRepo = getRepository(AccountBanned, 'authConnection');
 
   async signUp(accountDto: AccountDto, response: Response): Promise<void> {
     const {
@@ -61,7 +64,7 @@ export class AccountRepository extends Repository<Account> {
     account.username = username.toUpperCase();
     account.salt = salt;
     account.verifier = verifier;
-    account.reg_mail = email.toUpperCase();
+    account.reg_mail = email;
 
     try {
       await this.save(account);
@@ -142,15 +145,15 @@ export class AccountRepository extends Repository<Account> {
     const { password, emailCurrent, email, emailConfirm } = emailDto;
     const account = await this.findOne({ where: { id: accountId } });
 
-    if (emailCurrent?.toUpperCase() !== account.reg_mail) {
+    if (emailCurrent !== account.reg_mail) {
       throw new BadRequestException(['Your current email is wrong!']);
     }
 
-    if (emailConfirm?.toUpperCase() !== email.toUpperCase()) {
+    if (emailConfirm !== email.toUpperCase()) {
       throw new BadRequestException(['Email does not match']);
     }
 
-    if (email?.toUpperCase() === account.reg_mail) {
+    if (email === account.reg_mail) {
       throw new ConflictException(['That email address already exists']);
     }
 
@@ -165,7 +168,7 @@ export class AccountRepository extends Repository<Account> {
       throw new UnauthorizedException(['Your current password is wrong!']);
     }
 
-    account.reg_mail = email.toUpperCase();
+    account.reg_mail = email;
     await this.save(account);
 
     return {
@@ -175,7 +178,7 @@ export class AccountRepository extends Repository<Account> {
   }
 
   async unban(accountId: number) {
-    const accountBanned = await AccountBanned.findOne({
+    const accountBanned = await this.accountBannedRepo.findOne({
       where: { id: accountId, active: 1 },
     });
 
@@ -186,7 +189,7 @@ export class AccountRepository extends Repository<Account> {
     await Misc.setCoin(10, accountId);
 
     accountBanned.active = 0;
-    await accountBanned.save();
+    await this.accountBannedRepo.save(accountBanned);
 
     return { status: 'success' };
   }

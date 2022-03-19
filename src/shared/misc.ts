@@ -3,10 +3,16 @@ import { BadRequestException } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { BigInteger } from 'jsbn';
 import * as sha1 from 'js-sha1';
+import { getRepository } from 'typeorm';
 
 export class Misc {
   static async setCoin(coin: number, accountId: number): Promise<void> {
-    const accountInformation = await AccountInformation.findOne({
+    const accountInformationRepo = getRepository(
+      AccountInformation,
+      'authConnection',
+    );
+
+    const accountInformation = await accountInformationRepo.findOne({
       where: { id: accountId },
     });
 
@@ -15,7 +21,7 @@ export class Misc {
     }
 
     accountInformation.coins -= coin;
-    await accountInformation.save();
+    await accountInformationRepo.save(accountInformation);
   }
 
   static calculateSRP6Verifier(
