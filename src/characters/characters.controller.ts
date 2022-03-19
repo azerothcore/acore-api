@@ -32,7 +32,6 @@ export class CharactersController {
 
   @Get('/online')
   async online() {
-
     const accountGMs = await getConnection('authConnection')
       .getRepository(AccountAccess)
       .createQueryBuilder('account_access')
@@ -40,7 +39,7 @@ export class CharactersController {
       .where('gmlevel > 0')
       .getRawMany();
 
-    const GmIds = accountGMs.map(aa => aa.id);
+    const GmIds = accountGMs.map((aa) => aa.id);
 
     const connection = getConnection('charactersConnection');
     const characters = await connection
@@ -64,7 +63,7 @@ export class CharactersController {
       ])
       .getRawMany();
 
-      return characters;
+    return characters;
   }
 
   /* characters statistics */
@@ -74,7 +73,11 @@ export class CharactersController {
     return await connection
       .getRepository(Characters)
       .createQueryBuilder('characters')
-      .select(['characters.race as race', 'characters.class as class', 'characters.level as level'])
+      .select([
+        'characters.race as race',
+        'characters.class as class',
+        'characters.level as level',
+      ])
       .getRawMany();
   }
 
@@ -236,7 +239,7 @@ export class CharactersController {
   async unban(
     @Body() charactersDto: CharactersDto,
     @Account('id') accountId: number,
-  ){
+  ) {
     return this.charactersService.unban(charactersDto, accountId);
   }
 
