@@ -1,5 +1,5 @@
 import { sign } from 'jsonwebtoken';
-import { EntityRepository, Repository } from 'typeorm';
+import { EntityRepository, getRepository, Repository } from 'typeorm';
 
 import { Account } from './account.entity';
 import { AccountDto } from './dto/account.dto';
@@ -20,6 +20,15 @@ import { Misc } from '../shared/misc';
 
 @EntityRepository(Account)
 export class AccountRepository extends Repository<Account> {
+  private accountInformationRepo = getRepository(
+    AccountInformation,
+    'authConnection',
+  );
+  private accountPasswordRepo = getRepository(
+    AccountPassword,
+    'authConnection',
+  );
+
   async signUp(accountDto: AccountDto, response: Response): Promise<void> {
     const {
       username,
@@ -33,7 +42,7 @@ export class AccountRepository extends Repository<Account> {
     const account = this.create();
 
     const emailExists = await this.findOne({ reg_mail: email });
-    const phoneExists = await AccountInformation.findOne({ phone });
+    const phoneExists = await this.accountInformationRepo.findOne({ phone });
 
     if (emailExists) {
       throw new ConflictException(['Email address already exists']);
@@ -47,19 +56,22 @@ export class AccountRepository extends Repository<Account> {
       throw new BadRequestException(['Password does not match']);
     }
 
+    const [salt, verifier] = Misc.GetSRP6RegistrationData(username, password);
+
     account.username = username.toUpperCase();
-    account.verifier = Misc.calculateSRP6Verifier(username, password);
+    account.salt = salt;
+    account.verifier = verifier;
     account.reg_mail = email.toUpperCase();
 
     try {
-      await account.save();
+      await this.save(account);
 
       const accountInformation = new AccountInformation();
       accountInformation.id = account.id;
       accountInformation.first_name = firstName;
       accountInformation.last_name = lastName;
       accountInformation.phone = phone;
-      await accountInformation.save();
+      await this.accountInformationRepo.save(accountInformation);
 
       AccountRepository.createToken(account, HttpStatus.CREATED, response);
     } catch (error) {
@@ -110,13 +122,18 @@ export class AccountRepository extends Repository<Account> {
       throw new BadRequestException(['Password does not match']);
     }
 
-    account.verifier = Misc.calculateSRP6Verifier(account.username, password);
-    await account.save();
+    account.verifier = Misc.calculateSRP6Verifier(
+      account.username,
+      password,
+      account.salt,
+    );
+    console.log(account.salt);
+    await this.save(account);
 
     const accountPassword = new AccountPassword();
     accountPassword.id = account.id;
     accountPassword.password_changed_at = new Date(Date.now() - 1000);
-    await accountPassword.save();
+    await this.accountPasswordRepo.save(accountPassword);
 
     AccountRepository.createToken(account, HttpStatus.OK, response);
   }
@@ -125,15 +142,15 @@ export class AccountRepository extends Repository<Account> {
     const { password, emailCurrent, email, emailConfirm } = emailDto;
     const account = await this.findOne({ where: { id: accountId } });
 
-    if (emailCurrent.toUpperCase() !== account.reg_mail) {
+    if (emailCurrent?.toUpperCase() !== account.reg_mail) {
       throw new BadRequestException(['Your current email is wrong!']);
     }
 
-    if (emailConfirm.toUpperCase() !== email.toUpperCase()) {
+    if (emailConfirm?.toUpperCase() !== email.toUpperCase()) {
       throw new BadRequestException(['Email does not match']);
     }
 
-    if (email.toUpperCase() === account.reg_mail) {
+    if (email?.toUpperCase() === account.reg_mail) {
       throw new ConflictException(['That email address already exists']);
     }
 
@@ -149,7 +166,7 @@ export class AccountRepository extends Repository<Account> {
     }
 
     account.reg_mail = email.toUpperCase();
-    await account.save();
+    await this.save(account);
 
     return {
       status: 'success',

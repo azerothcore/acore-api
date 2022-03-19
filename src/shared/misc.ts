@@ -55,6 +55,17 @@ export class Misc {
     return verifier;
   }
 
+  static GetSRP6RegistrationData(
+    username: string,
+    password: string,
+  ): Array<Buffer> {
+    const salt = randomBytes(32);
+
+    const verifier = this.calculateSRP6Verifier(username, password, salt);
+
+    return [salt, verifier];
+  }
+
   static verifySRP6(
     username: string,
     password: string,
