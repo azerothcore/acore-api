@@ -43,7 +43,7 @@ export class CharactersService {
       where: { account: accountId },
     });
 
-    if (characters.guid !== +guid) {
+    if (characters?.guid !== +guid) {
       throw new NotFoundException(['Account with that character not found']);
     }
 
@@ -60,7 +60,7 @@ export class CharactersService {
       where: { Id: recoveryItemDto.id },
     });
 
-    if (characters.guid !== recoveryItemDto.guid) {
+    if (characters?.guid !== recoveryItemDto.guid) {
       throw new NotFoundException(['Account with that character not found']);
     }
 
@@ -90,7 +90,7 @@ export class CharactersService {
       where: { deleteInfos_Account: accountId },
     });
 
-    if (characters.guid !== +charactersDto.guid) {
+    if (characters?.guid !== +charactersDto.guid) {
       throw new NotFoundException(['Account with that character not found']);
     }
 
@@ -109,7 +109,7 @@ export class CharactersService {
       where: { account: accountId },
     });
 
-    if (characters.guid !== +charactersDto.guid) {
+    if (characters?.guid !== +charactersDto.guid) {
       throw new NotFoundException('Account with that character not found');
     }
 
@@ -154,7 +154,7 @@ export class CharactersService {
       where: { account: accountId },
     });
 
-    if (characters.guid !== charactersDto.guid) {
+    if (characters?.guid !== charactersDto.guid) {
       throw new NotFoundException(['Account with that character not found']);
     }
 
@@ -176,7 +176,7 @@ export class CharactersService {
       where: { account: accountId },
     });
 
-    if (characters.guid !== +charactersDto.guid) {
+    if (characters?.guid !== +charactersDto.guid) {
       throw new NotFoundException(['Account with that character not found']);
     }
 

@@ -9,6 +9,7 @@ import { verify } from 'jsonwebtoken';
 import { Account } from '../auth/account.entity';
 import { AccountPassword } from '../auth/account_password.entity';
 import { AccountInformation } from '../auth/account_information.entity';
+import { getRepository } from 'typeorm';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -27,7 +28,7 @@ export class AuthGuard implements CanActivate {
       request.headers.authorization.startsWith('Bearer')
     )
       token = request.headers.authorization.split(' ')[1];
-    else if (request.cookies.jwt) {
+    else if (request.cookies?.jwt) {
       token = request.cookies.jwt;
     }
 
@@ -59,7 +60,10 @@ export class AuthGuard implements CanActivate {
       }
     }
 
-    const accountExists = await Account.findOne({
+    const accountExists = await getRepository(
+      Account,
+      'authConnection',
+    ).findOne({
       where: { id: this.decoded.id },
     });
 
@@ -72,11 +76,18 @@ export class AuthGuard implements CanActivate {
     delete accountExists.salt;
     delete accountExists.verifier;
 
-    const accountPassword = await AccountPassword.findOne({
+    const accountPassword = await getRepository(
+      AccountPassword,
+      'authConnection',
+    ).findOne({
       where: { id: this.decoded.id },
     });
 
-    if (accountPassword && accountPassword.password_changed_at) {
+    if (
+      request.url === '/auth/updateMyPassword' &&
+      accountPassword &&
+      accountPassword.password_changed_at
+    ) {
       const changedTimestamp =
         accountPassword.password_changed_at.getTime() / 1000;
 
@@ -87,7 +98,10 @@ export class AuthGuard implements CanActivate {
       }
     }
 
-    const accountInformation = await AccountInformation.findOne({
+    const accountInformation = await getRepository(
+      AccountInformation,
+      'authConnection',
+    ).findOne({
       where: { id: this.decoded.id },
     });
 
