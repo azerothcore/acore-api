@@ -133,6 +133,8 @@ export class CharactersController {
       .select([
         'c.name AS captainName',
         'c.race AS captainRace',
+        'c.gender AS captainGender',
+        'c.class AS captainClass',
         'arena_team.*',
       ])
       .where('arena_team.arenaTeamId = ' + arenaTeamId)
@@ -149,6 +151,8 @@ export class CharactersController {
       .select([
         'c.name AS captainName',
         'c.race AS captainRace',
+        'c.gender AS captainGender',
+        'c.class AS captainClass',
         'arena_team.*',
       ])
       .where('arena_team.type = ' + type)
