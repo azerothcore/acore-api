@@ -2,29 +2,29 @@ import {
   Body,
   Controller,
   Get,
-  Post,
   Param,
+  Patch,
+  Post,
   Query,
   UseGuards,
-  Patch,
 } from '@nestjs/common';
 
-import { CharactersService } from './characters.service';
 import { getConnection } from 'typeorm';
-import { Characters } from './characters.entity';
-import { GuildMember } from './guild_member.entity';
-import { Guild } from './guild.entity';
+import { Account } from '../auth/account.decorator';
+import { AccountAccess } from '../auth/account_access.entity';
+import { AuthGuard } from '../shared/auth.guard';
 import { ArenaTeam } from './arena_team.entity';
 import { ArenaTeamMember } from './arena_team_member.entity';
-import { CharacterArenaStats } from './character_arena_stats.entity';
-import { Worldstates } from './worldstates.entity';
-import { AuthGuard } from '../shared/auth.guard';
-import { Account } from '../auth/account.decorator';
-import { RecoveryItemDTO } from './dto/recovery_item.dto';
-import { CharactersDto } from './dto/characters.dto';
-import { RecoveryItem } from './recovery_item.entity';
 import { BattlegroundDeserters } from './battleground_deserters.entity';
-import { AccountAccess } from '../auth/account_access.entity';
+import { CharacterArenaStats } from './character_arena_stats.entity';
+import { Characters } from './characters.entity';
+import { CharactersService } from './characters.service';
+import { CharactersDto } from './dto/characters.dto';
+import { RecoveryItemDTO } from './dto/recovery_item.dto';
+import { Guild } from './guild.entity';
+import { GuildMember } from './guild_member.entity';
+import { RecoveryItem } from './recovery_item.entity';
+import { Worldstates } from './worldstates.entity';
 
 @Controller('characters')
 export class CharactersController {
@@ -78,6 +78,25 @@ export class CharactersController {
         'characters.class as class',
         'characters.level as level',
       ])
+      .getRawMany();
+  }
+
+  /* characters data */
+  @Get('/search_characters')
+  async character_data(@Query('name') name: string) {
+    const connection = getConnection('charactersConnection');
+    return await connection
+      .getRepository(Characters)
+      .createQueryBuilder('characters')
+      .select([
+        'characters.guid as guid',
+        'characters.name as name',
+        'characters.race as race',
+        'characters.class as class',
+        'characters.level as level',
+        'characters.gender as gender',
+      ])
+      .where('characters.name LIKE :name', { name: `${name}%` })
       .getRawMany();
   }
 
