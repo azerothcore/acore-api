@@ -96,7 +96,9 @@ export class CharactersController {
         'characters.level as level',
         'characters.gender as gender',
       ])
-      .where('characters.name LIKE :name', { name: `${name}%` })
+      .where('LOWER(characters.name) LIKE :name', {
+        name: `${name.toLowerCase()}%`,
+      })
       .getRawMany();
   }
 
@@ -213,6 +215,66 @@ export class CharactersController {
       ])
       .where('at.arenaTeamId = ' + arenaTeamId)
       .getRawMany();
+  }
+
+  /* player arena team */
+  @Get('/player_arena_team/:guid')
+  async player_arena_team(@Param('guid') guid: number) {
+    const connection = getConnection('charactersConnection');
+
+    const charData = await connection
+      .getRepository(Characters)
+      .createQueryBuilder('characters')
+      .select([
+        'characters.guid as guid',
+        'characters.name as name',
+        'characters.race as race',
+        'characters.class as class',
+        'characters.level as level',
+        'characters.gender as gender',
+      ])
+      .where('guid=:guid', { guid })
+      .getRawOne();
+
+    const arenaTeamsData = await connection
+      .getRepository(ArenaTeamMember)
+      .createQueryBuilder('arena_team_member')
+      .leftJoinAndSelect(
+        ArenaTeam,
+        'at',
+        'at.arenaTeamId = arena_team_member.arenaTeamId',
+      )
+      .select([
+        'at.arenaTeamId as arenaTeamId',
+        'arena_team_member.weekGames as weekGames',
+        'arena_team_member.weekWins as weekWins',
+        'arena_team_member.seasonGames as seasonGames',
+        'arena_team_member.seasonWins as seasonWins',
+        'arena_team_member.personalRating as personalRating',
+        'at.name as arenaTeamName',
+        'at.type as arenaType',
+      ])
+      .where('arena_team_member.guid=:guid', { guid })
+      .orderBy({ 'at.type': 'ASC' })
+      .getRawMany();
+
+    const characterArenaStats = await connection
+      .getRepository(CharacterArenaStats)
+      .createQueryBuilder('character_arena_stats')
+      .select([
+        'character_arena_stats.guid as guid',
+        'character_arena_stats.slot as slot',
+        'character_arena_stats.matchMakerRating as matchMakerRating',
+        'character_arena_stats.maxMMR as maxMMR',
+      ])
+      .where('character_arena_stats.guid=:guid', { guid })
+      .getRawMany();
+
+    return {
+      playerData: charData,
+      arenaTeamsData,
+      characterArenaStats,
+    };
   }
 
   @Get('search/worldstates')
