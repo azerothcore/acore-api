@@ -251,6 +251,7 @@ export class CharactersController {
         'arena_team_member.seasonGames as seasonGames',
         'arena_team_member.seasonWins as seasonWins',
         'arena_team_member.personalRating as personalRating',
+        'at.weekGames as arenaTeamWeekGames',
         'at.name as arenaTeamName',
         'at.type as arenaType',
       ])
