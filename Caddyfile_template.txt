@@ -1,0 +1,20 @@
+## Example of Caddyfile, with /api prefix rerouted. Caddy works 10x faster than Apache2 for this API/Server-status.
+
+{
+    debug
+    log {
+        output file /var/log/caddy/access.log
+        level DEBUG
+    }
+}
+
+
+:80 {
+    root * /var/www/azerothcore/server-status/dist/server-status/browser
+    file_server
+
+        handle /api/* {
+                uri strip_prefix /api
+                reverse_proxy 127.0.0.1:3000
+}
+}

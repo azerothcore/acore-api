@@ -85,7 +85,26 @@ export class CharactersController {
   @Get('/search_characters')
   async character_data(@Query('name') name: string) {
     const connection = getConnection('charactersConnection');
+
+  // If 'name' parameter is null  or void, return all characters
+    if (!name || name.trim() === '') {
     return await connection
+      .getRepository(Characters)
+      .createQueryBuilder('characters')
+      .select([
+        'characters.guid as guid',
+        'characters.name as name',
+        'characters.race as race',
+        'characters.class as class',
+        'characters.level as level',
+        'characters.gender as gender',
+      ])
+      .getRawMany();
+  }  
+
+
+  // if 'name" is there, search with filter  
+  return await connection
       .getRepository(Characters)
       .createQueryBuilder('characters')
       .select([
