@@ -5,14 +5,16 @@ import {
 } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
-import { Characters } from './characters.entity';
 import { Like, Repository } from 'typeorm';
-import { RecoveryItemDTO } from './dto/recovery_item.dto';
-import { RecoveryItem } from './recovery_item.entity';
-import { Soap } from '../shared/soap';
-import { CharactersDto } from './dto/characters.dto';
 import { Misc } from '../shared/misc';
+import { Soap } from '../shared/soap';
 import { CharacterBanned } from './character_banned.entity';
+import { Characters } from './characters.entity';
+import { CharactersDto } from './dto/characters.dto';
+import { LogArenaFightsQueryDto } from './dto/log_arena_fights.dto';
+import { RecoveryItemDTO } from './dto/recovery_item.dto';
+import { LogArenaFights } from './log_arena_fights.entity';
+import { RecoveryItem } from './recovery_item.entity';
 import { Worldstates } from './worldstates.entity';
 
 @Injectable()
@@ -26,6 +28,8 @@ export class CharactersService {
     private readonly characterBannedRepository: Repository<CharacterBanned>,
     @InjectRepository(Worldstates, 'charactersConnection')
     private readonly worldstatesRepository: Repository<Worldstates>,
+    @InjectRepository(LogArenaFights, 'charactersConnection')
+    private readonly logArenaFightsRepository: Repository<LogArenaFights>,
   ) {}
 
   async search_worldstates(param: Worldstates): Promise<Worldstates[]> {
@@ -185,5 +189,80 @@ export class CharactersService {
     Soap.command(`character ${command} ${characters.name} ${option}`);
 
     return { status: 'success' };
+  }
+
+  async getLogArenaFights(query: LogArenaFightsQueryDto): Promise<any[]> {
+    const queryBuilder = this.logArenaFightsRepository
+      .createQueryBuilder('laf')
+      .leftJoin(
+        'arena_team',
+        'winner_team',
+        'winner_team.arenaTeamId = laf.winner',
+      )
+      .leftJoin(
+        'arena_team',
+        'loser_team',
+        'loser_team.arenaTeamId = laf.loser',
+      )
+      .leftJoin('log_arena_memberstats', 'lam', 'lam.fight_id = laf.fight_id')
+      .leftJoin('characters', 'c', 'c.guid = lam.guid')
+      .select([
+        'laf.fight_id as fight_id',
+        'laf.type as type',
+        'laf.winner as winner',
+        'laf.time as time',
+        'laf.loser as loser',
+        'laf.duration as duration',
+        'laf.winner_tr as winner_tr',
+        'laf.winner_mmr as winner_mmr',
+        'laf.winner_tr_change as winner_tr_change',
+        'laf.loser_tr as loser_tr',
+        'laf.loser_mmr as loser_mmr',
+        'laf.loser_tr_change as loser_tr_change',
+        'laf.currOnline as currOnline',
+        'CASE WHEN laf.type IN (3, 4) THEN "" ELSE COALESCE(winner_team.name, "") END as winner_name',
+        'CASE WHEN laf.type IN (3, 4) THEN "" ELSE COALESCE(loser_team.name, "") END as loser_name',
+        'JSON_ARRAYAGG(CASE WHEN lam.team = laf.winner THEN JSON_OBJECT("name", c.name, "race", c.race, "class", c.class, "gender", c.gender) END) as winner_members',
+        'JSON_ARRAYAGG(CASE WHEN lam.team = laf.loser THEN JSON_OBJECT("name", c.name, "race", c.race, "class", c.class, "gender", c.gender) END) as loser_members',
+      ])
+      .groupBy('laf.fight_id')
+      .addGroupBy('laf.type')
+      .addGroupBy('laf.winner')
+      .addGroupBy('laf.time')
+      .addGroupBy('laf.loser')
+      .orderBy('laf.time', 'DESC')
+      .limit(query.limit || 20);
+
+    if (query.type) {
+      queryBuilder.andWhere('laf.type = :type', {
+        type: query.type,
+      });
+    }
+
+    if (query.year) {
+      queryBuilder.andWhere('YEAR(laf.time) = :year', {
+        year: query.year,
+      });
+    }
+
+    if (query.month) {
+      queryBuilder.andWhere('MONTH(laf.time) = :month', {
+        month: query.month,
+      });
+    }
+
+    if (query.minLevel) {
+      queryBuilder.andWhere('c.level >= :minLevel', {
+        minLevel: query.minLevel,
+      });
+    }
+
+    if (query.maxLevel) {
+      queryBuilder.andWhere('c.level <= :maxLevel', {
+        maxLevel: query.maxLevel,
+      });
+    }
+
+    return await queryBuilder.getRawMany();
   }
 }
