@@ -20,6 +20,8 @@ import { CharacterArenaStats } from './character_arena_stats.entity';
 import { Characters } from './characters.entity';
 import { CharactersService } from './characters.service';
 import { CharactersDto } from './dto/characters.dto';
+import { LogArenaFightResponse } from './dto/log_arena_fight.interface';
+import { LogArenaFightsStatsResponse } from './dto/log_arena_fight_stats.interface';
 import { LogArenaFightsQueryDto } from './dto/log_arena_fights.dto';
 import { RecoveryItemDTO } from './dto/recovery_item.dto';
 import { Guild } from './guild.entity';
@@ -405,7 +407,14 @@ export class CharactersController {
   @Get('/log_arena_fights')
   async getLogArenaFights(
     @Query() query: LogArenaFightsQueryDto,
-  ): Promise<any[]> {
+  ): Promise<LogArenaFightResponse[]> {
     return this.charactersService.getLogArenaFights(query);
+  }
+
+  @Get('/log_arena_fights_stats/:fight_id')
+  async getLogArenaFightsStats(
+    @Param('fight_id') fight_id: number,
+  ): Promise<LogArenaFightsStatsResponse> {
+    return this.charactersService.getLogArenaFightStats(fight_id);
   }
 }

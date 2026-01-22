@@ -11,9 +11,12 @@ import { Soap } from '../shared/soap';
 import { CharacterBanned } from './character_banned.entity';
 import { Characters } from './characters.entity';
 import { CharactersDto } from './dto/characters.dto';
+import { LogArenaFightResponse } from './dto/log_arena_fight.interface';
+import { LogArenaFightsStatsResponse } from './dto/log_arena_fight_stats.interface';
 import { LogArenaFightsQueryDto } from './dto/log_arena_fights.dto';
 import { RecoveryItemDTO } from './dto/recovery_item.dto';
 import { LogArenaFights } from './log_arena_fights.entity';
+import { LogArenaMemberstats } from './log_arena_memberstats.entity';
 import { RecoveryItem } from './recovery_item.entity';
 import { Worldstates } from './worldstates.entity';
 
@@ -30,6 +33,8 @@ export class CharactersService {
     private readonly worldstatesRepository: Repository<Worldstates>,
     @InjectRepository(LogArenaFights, 'charactersConnection')
     private readonly logArenaFightsRepository: Repository<LogArenaFights>,
+    @InjectRepository(LogArenaMemberstats, 'charactersConnection')
+    private readonly logArenaMemberstatsRepository: Repository<LogArenaMemberstats>,
   ) {}
 
   async search_worldstates(param: Worldstates): Promise<Worldstates[]> {
@@ -191,7 +196,9 @@ export class CharactersService {
     return { status: 'success' };
   }
 
-  async getLogArenaFights(query: LogArenaFightsQueryDto): Promise<any[]> {
+  async getLogArenaFights(
+    query: LogArenaFightsQueryDto,
+  ): Promise<LogArenaFightResponse[]> {
     const queryBuilder = this.logArenaFightsRepository
       .createQueryBuilder('laf')
       .leftJoin(
@@ -266,5 +273,101 @@ export class CharactersService {
     }
 
     return await queryBuilder.getRawMany();
+  }
+
+  async getLogArenaFightStats(
+    fight_id: number,
+  ): Promise<LogArenaFightsStatsResponse> {
+    const fight = await this.logArenaFightsRepository
+      .createQueryBuilder('laf')
+      .leftJoin(
+        'arena_team',
+        'winner_team',
+        'winner_team.arenaTeamId = laf.winner',
+      )
+      .leftJoin(
+        'arena_team',
+        'loser_team',
+        'loser_team.arenaTeamId = laf.loser',
+      )
+      .leftJoin(
+        'characters',
+        'winner_captain',
+        'winner_captain.guid = winner_team.captainGuid',
+      )
+      .leftJoin(
+        'characters',
+        'loser_captain',
+        'loser_captain.guid = loser_team.captainGuid',
+      )
+      .select([
+        'laf.fight_id as fight_id',
+        'laf.time as time',
+        'laf.type as type',
+        'laf.duration as duration',
+        'laf.winner as winner',
+        'laf.winner_tr as winner_tr',
+        'laf.winner_mmr as winner_mmr',
+        'laf.winner_tr_change as winner_tr_change',
+        'laf.loser as loser',
+        'laf.loser_tr as loser_tr',
+        'laf.loser_mmr as loser_mmr',
+        'laf.loser_tr_change as loser_tr_change',
+        'winner_team.name as winner_team_name',
+        'winner_captain.race as winner_captain_race',
+        'loser_team.name as loser_team_name',
+        'loser_captain.race as loser_captain_race',
+      ])
+      .where('laf.fight_id = :fight_id', { fight_id })
+      .getRawOne();
+
+    if (!fight) {
+      throw new NotFoundException('Arena fight not found');
+    }
+
+    const memberStats = await this.logArenaMemberstatsRepository
+      .createQueryBuilder('lam')
+      .leftJoin('characters', 'c', 'c.guid = lam.guid')
+      .select([
+        'lam.fight_id as fight_id',
+        'lam.member_id as member_id',
+        'lam.name as name',
+        'lam.guid as guid',
+        'lam.team as team',
+        'lam.account as account',
+        'lam.damage as damage',
+        'lam.heal as heal',
+        'lam.kblows as kblows',
+        'c.race as race',
+        'c.gender as gender',
+        'c.class as class',
+        'c.level as level',
+      ])
+      .where('lam.fight_id = :fight_id', { fight_id })
+      .orderBy('lam.member_id', 'ASC')
+      .getRawMany();
+
+    const nextFight = await this.logArenaFightsRepository
+      .createQueryBuilder('laf')
+      .select('laf.fight_id')
+      .where('laf.fight_id > :fight_id', { fight_id })
+      .orderBy('laf.fight_id', 'ASC')
+      .limit(1)
+      .getRawOne();
+
+    const previousFight = await this.logArenaFightsRepository
+      .createQueryBuilder('laf')
+      .select('laf.fight_id')
+      .where('laf.fight_id < :fight_id', { fight_id })
+      .orderBy('laf.fight_id', 'DESC')
+      .limit(1)
+      .getRawOne();
+
+    return {
+      fight,
+      memberStats,
+      fight_id_next: nextFight?.laf_fight_id || null,
+      fight_id_previous: previousFight?.laf_fight_id || null,
+    };
   }
 }
