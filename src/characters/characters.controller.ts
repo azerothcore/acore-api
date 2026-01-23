@@ -20,6 +20,9 @@ import { CharacterArenaStats } from './character_arena_stats.entity';
 import { Characters } from './characters.entity';
 import { CharactersService } from './characters.service';
 import { CharactersDto } from './dto/characters.dto';
+import { LogArenaFightResponse } from './dto/log_arena_fight.interface';
+import { LogArenaFightsStatsResponse } from './dto/log_arena_fight_stats.interface';
+import { LogArenaFightsQueryDto } from './dto/log_arena_fights.dto';
 import { RecoveryItemDTO } from './dto/recovery_item.dto';
 import { Guild } from './guild.entity';
 import { GuildMember } from './guild_member.entity';
@@ -86,25 +89,24 @@ export class CharactersController {
   async character_data(@Query('name') name: string) {
     const connection = getConnection('charactersConnection');
 
-  // If 'name' parameter is null  or void, return all characters
+    // If 'name' parameter is null  or void, return all characters
     if (!name || name.trim() === '') {
+      return await connection
+        .getRepository(Characters)
+        .createQueryBuilder('characters')
+        .select([
+          'characters.guid as guid',
+          'characters.name as name',
+          'characters.race as race',
+          'characters.class as class',
+          'characters.level as level',
+          'characters.gender as gender',
+        ])
+        .getRawMany();
+    }
+
+    // if 'name" is there, search with filter
     return await connection
-      .getRepository(Characters)
-      .createQueryBuilder('characters')
-      .select([
-        'characters.guid as guid',
-        'characters.name as name',
-        'characters.race as race',
-        'characters.class as class',
-        'characters.level as level',
-        'characters.gender as gender',
-      ])
-      .getRawMany();
-  }  
-
-
-  // if 'name" is there, search with filter  
-  return await connection
       .getRepository(Characters)
       .createQueryBuilder('characters')
       .select([
@@ -400,5 +402,19 @@ export class CharactersController {
     @Account('id') accountId: number,
   ) {
     return this.charactersService.unstuck(charactersDto, accountId);
+  }
+
+  @Get('/log_arena_fights')
+  async getLogArenaFights(
+    @Query() query: LogArenaFightsQueryDto,
+  ): Promise<LogArenaFightResponse[]> {
+    return this.charactersService.getLogArenaFights(query);
+  }
+
+  @Get('/log_arena_fights_stats/:fight_id')
+  async getLogArenaFightsStats(
+    @Param('fight_id') fight_id: number,
+  ): Promise<LogArenaFightsStatsResponse> {
+    return this.charactersService.getLogArenaFightStats(fight_id);
   }
 }
