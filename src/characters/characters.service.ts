@@ -227,7 +227,7 @@ export class CharactersService {
         'laf.loser_mmr as loser_mmr',
         'laf.loser_tr_change as loser_tr_change',
         'laf.currOnline as currOnline',
-        'c.level as level',
+        'MIN(c.level) as level',
         'CASE WHEN laf.type IN (3, 4) THEN "" ELSE COALESCE(winner_team.name, "") END as winner_name',
         'CASE WHEN laf.type IN (3, 4) THEN "" ELSE COALESCE(loser_team.name, "") END as loser_name',
         'JSON_ARRAYAGG(CASE WHEN lam.team = laf.winner THEN JSON_OBJECT("name", c.name, "race", c.race, "class", c.class, "gender", c.gender, "level", c.level) END) as winner_members',
@@ -238,7 +238,6 @@ export class CharactersService {
       .addGroupBy('laf.winner')
       .addGroupBy('laf.time')
       .addGroupBy('laf.loser')
-      .addGroupBy('c.level')
       .orderBy('laf.time', 'DESC')
       .limit((query.limit > 500 ? 500 : query.limit) || 20);
 
@@ -272,7 +271,21 @@ export class CharactersService {
       });
     }
 
-    return await queryBuilder.getRawMany();
+    const logArenaFightsResponse = (await queryBuilder.getRawMany()).map(
+      (fight: LogArenaFightResponse) => {
+        fight.winner_members = fight.winner_members.filter(
+          (member) => member !== null,
+        );
+
+        fight.loser_members = fight.loser_members.filter(
+          (member) => member !== null,
+        );
+
+        return fight;
+      },
+    );
+
+    return logArenaFightsResponse;
   }
 
   async getLogArenaFightStats(
