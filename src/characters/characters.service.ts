@@ -219,7 +219,6 @@ export class CharactersService {
         'laf.winner as winner',
         'laf.time as time',
         'laf.loser as loser',
-        'MIN(c.level) as level',
         'CASE WHEN laf.type IN (1, 4) THEN "" ELSE COALESCE(winner_team.name, "") END as winner_name',
         'CASE WHEN laf.type IN (1, 4) THEN "" ELSE COALESCE(loser_team.name, "") END as loser_name',
         'JSON_ARRAYAGG(CASE WHEN lam.team = laf.winner THEN JSON_OBJECT("name", c.name, "race", c.race, "class", c.class, "gender", c.gender, "level", c.level) END) as winner_members',
@@ -248,18 +247,6 @@ export class CharactersService {
     if (query.month) {
       queryBuilder.andWhere('MONTH(laf.time) = :month', {
         month: query.month,
-      });
-    }
-
-    if (query.minLevel) {
-      queryBuilder.andWhere('level >= :minLevel', {
-        minLevel: query.minLevel,
-      });
-    }
-
-    if (query.maxLevel) {
-      queryBuilder.andWhere('level <= :maxLevel', {
-        maxLevel: query.maxLevel,
       });
     }
 

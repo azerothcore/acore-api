@@ -26,18 +26,4 @@ export class LogArenaFightsQueryDto {
   @IsInt()
   @Min(1)
   type?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(80)
-  minLevel?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(80)
-  maxLevel?: number;
 }
