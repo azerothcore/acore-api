@@ -1,10 +1,10 @@
-import 'dotenv/config';
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
-import * as helmet from 'helmet';
-import * as rateLimit from 'express-rate-limit';
+import { NestFactory } from '@nestjs/core';
 import * as compression from 'compression';
+import 'dotenv/config';
+import * as rateLimit from 'express-rate-limit';
+import * as helmet from 'helmet';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const logger = new Logger('bootstrap');
@@ -17,7 +17,7 @@ async function bootstrap() {
   if (process.env.NODE_ENV === 'production') {
     app.use(
       rateLimit({
-        max: 100,
+        max: Number(process.env['RATE_LIMIT_MAX']) || 100,
         windowMs: 60 * 60 * 1000,
         message: 'Too many requests from this IP, Please try again in an hour!',
       }),
