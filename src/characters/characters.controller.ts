@@ -417,4 +417,17 @@ export class CharactersController {
   ): Promise<LogArenaFightsStatsResponse> {
     return this.charactersService.getLogArenaFightStats(fight_id);
   }
+
+  @Get('/players_monthly_games')
+  async getPlayersMonthlyGames(
+    @Query('excludeType') excludeType?: number | number[],
+    @Query('month') month?: number,
+    @Query('year') year?: number,
+  ) {
+    return this.charactersService.getPlayersMonthlyGames(
+      excludeType,
+      month,
+      year,
+    );
+  }
 }

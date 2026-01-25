@@ -252,13 +252,13 @@ export class CharactersService {
     }
 
     if (query.minLevel) {
-      queryBuilder.andWhere('c.level >= :minLevel', {
+      queryBuilder.andWhere('level >= :minLevel', {
         minLevel: query.minLevel,
       });
     }
 
     if (query.maxLevel) {
-      queryBuilder.andWhere('c.level <= :maxLevel', {
+      queryBuilder.andWhere('level <= :maxLevel', {
         maxLevel: query.maxLevel,
       });
     }
@@ -374,5 +374,111 @@ export class CharactersService {
       fight_id_next: nextFight?.laf_fight_id || null,
       fight_id_previous: previousFight?.laf_fight_id || null,
     };
+  }
+
+  async getPlayersMonthlyGames(
+    excludeType?: number | number[],
+    month?: number,
+    year?: number,
+  ) {
+    const currentDate = new Date();
+    const currentYear = year ?? currentDate.getFullYear();
+    const currentMonth = month ?? currentDate.getMonth() + 1;
+
+    // Normalize excludeType to always be an array
+    const excludeTypes =
+      excludeType !== undefined
+        ? Array.isArray(excludeType)
+          ? excludeType
+          : [excludeType]
+        : undefined;
+
+    // Get top 100 players with total games
+    const topPlayersQuery = this.logArenaMemberstatsRepository
+      .createQueryBuilder('lam')
+      .leftJoin('log_arena_fights', 'laf', 'laf.fight_id = lam.fight_id')
+      .leftJoin('characters', 'c', 'c.guid = lam.guid')
+      .select([
+        'lam.guid as guid',
+        'c.name as name',
+        'c.level as level',
+        'c.race as race',
+        'c.gender as gender',
+        'c.class as class',
+        'COUNT(DISTINCT lam.fight_id) as totalGames',
+      ])
+      .where('YEAR(laf.time) = :year', { year: currentYear })
+      .andWhere('MONTH(laf.time) = :month', { month: currentMonth })
+      .groupBy('lam.guid')
+      .addGroupBy('c.name')
+      .addGroupBy('c.level')
+      .addGroupBy('c.race')
+      .addGroupBy('c.gender')
+      .addGroupBy('c.class')
+      .orderBy('totalGames', 'DESC')
+      .limit(100);
+
+    if (excludeTypes !== undefined) {
+      topPlayersQuery.andWhere('laf.type NOT IN (:...excludeTypes)', {
+        excludeTypes,
+      });
+    }
+
+    const topPlayers = await topPlayersQuery.getRawMany();
+
+    if (topPlayers.length === 0) {
+      return [];
+    }
+
+    // Get games by type for all top players
+    const playerGuids = topPlayers.map((p) => p.guid);
+    const gamesByTypeQuery = this.logArenaMemberstatsRepository
+      .createQueryBuilder('lam')
+      .leftJoin('log_arena_fights', 'laf', 'laf.fight_id = lam.fight_id')
+      .select([
+        'lam.guid as guid',
+        'laf.type as type',
+        'COUNT(DISTINCT lam.fight_id) as gameCount',
+      ])
+      .where('lam.guid IN (:...playerGuids)', { playerGuids })
+      .andWhere('YEAR(laf.time) = :year', { year: currentYear })
+      .andWhere('MONTH(laf.time) = :month', { month: currentMonth })
+      .groupBy('lam.guid')
+      .addGroupBy('laf.type');
+
+    if (excludeTypes !== undefined) {
+      gamesByTypeQuery.andWhere('laf.type NOT IN (:...excludeTypes)', {
+        excludeTypes,
+      });
+    }
+
+    const gamesByTypeResults = await gamesByTypeQuery.getRawMany();
+
+    // Map games by type to each player
+    const gamesByTypeMap = new Map<number, { type: number; game: number }[]>();
+
+    gamesByTypeResults.forEach((result) => {
+      if (!gamesByTypeMap.has(result.guid)) {
+        gamesByTypeMap.set(result.guid, []);
+      }
+      gamesByTypeMap.get(result.guid).push({
+        type: result.type,
+        game: parseInt(result.gameCount, 10),
+      });
+    });
+
+    // Combine the data
+    return topPlayers.map((player) => ({
+      character: {
+        guid: player.guid,
+        name: player.name,
+        level: player.level,
+        race: player.race,
+        gender: player.gender,
+        class: player.class,
+      },
+      totalGames: parseInt(player.totalGames, 10),
+      gamesByType: gamesByTypeMap.get(player.guid) || [],
+    }));
   }
 }
