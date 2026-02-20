@@ -380,7 +380,7 @@ export class CharactersService {
           : [excludeType]
         : undefined;
 
-    // Get top 100 players with total games
+    // Get top 100 players with most won games
     const topPlayersQuery = this.logArenaMemberstatsRepository
       .createQueryBuilder('lam')
       .leftJoin('log_arena_fights', 'laf', 'laf.fight_id = lam.fight_id')
@@ -392,7 +392,7 @@ export class CharactersService {
         'c.race as race',
         'c.gender as gender',
         'c.class as class',
-        'COUNT(DISTINCT lam.fight_id) as totalGames',
+        'COUNT(DISTINCT CASE WHEN lam.team = laf.winner THEN lam.fight_id END) as totalGames',
       ])
       .where('YEAR(laf.time) = :year', { year: currentYear })
       .andWhere('MONTH(laf.time) = :month', { month: currentMonth })
