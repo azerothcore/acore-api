@@ -428,6 +428,7 @@ export class CharactersService {
         'COUNT(DISTINCT lam.fight_id) as gameCount',
       ])
       .where('lam.guid IN (:...playerGuids)', { playerGuids })
+      .andWhere('lam.team = laf.winner')
       .andWhere('YEAR(laf.time) = :year', { year: currentYear })
       .andWhere('MONTH(laf.time) = :month', { month: currentMonth })
       .groupBy('lam.guid')
