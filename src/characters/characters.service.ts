@@ -5,12 +5,26 @@ import {
 } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
+import {
+  AchievementCategory,
+  AchievementWithQuantity,
+} from 'src/storage/dbc.interface';
 import { Like, Repository } from 'typeorm';
 import { Misc } from '../shared/misc';
 import { Soap } from '../shared/soap';
+import { DbcService } from '../storage/dbc.service';
+import { CharacterAchievement } from './character_achievement.entity';
+import { CharacterAchievementProgress } from './character_achievement_progress.entity';
 import { CharacterBanned } from './character_banned.entity';
 import { Characters } from './characters.entity';
 import { CharactersDto } from './dto/characters.dto';
+import {
+  AchievementProgressEntry,
+  CharacterAchievementSummary,
+  CharacterDetail,
+  PlayerMonthlyGames,
+  StatusResponse,
+} from './dto/characters.interface';
 import { LogArenaFightResponse } from './dto/log_arena_fight.interface';
 import { LogArenaFightsStatsResponse } from './dto/log_arena_fight_stats.interface';
 import { LogArenaFightsQueryDto } from './dto/log_arena_fights.dto';
@@ -35,6 +49,11 @@ export class CharactersService {
     private readonly logArenaFightsRepository: Repository<LogArenaFights>,
     @InjectRepository(LogArenaMemberstats, 'charactersConnection')
     private readonly logArenaMemberstatsRepository: Repository<LogArenaMemberstats>,
+    @InjectRepository(CharacterAchievement, 'charactersConnection')
+    private readonly characterAchievementRepository: Repository<CharacterAchievement>,
+    @InjectRepository(CharacterAchievementProgress, 'charactersConnection')
+    private readonly characterAchievementProgressRepository: Repository<CharacterAchievementProgress>,
+    private readonly dbcService: DbcService,
   ) {}
 
   async search_worldstates(param: Worldstates): Promise<Worldstates[]> {
@@ -59,7 +78,10 @@ export class CharactersService {
     return await this.recoveryItemRepository.find({ where: { Guid: guid } });
   }
 
-  async recoveryItem(recoveryItemDto: RecoveryItemDTO, accountId: number) {
+  async recoveryItem(
+    recoveryItemDto: RecoveryItemDTO,
+    accountId: number,
+  ): Promise<StatusResponse> {
     const characters = await this.charactersRepository.findOne({
       select: ['guid', 'name'],
       where: { account: accountId },
@@ -93,7 +115,10 @@ export class CharactersService {
     });
   }
 
-  async recoveryHero(charactersDto: CharactersDto, accountId: number) {
+  async recoveryHero(
+    charactersDto: CharactersDto,
+    accountId: number,
+  ): Promise<StatusResponse> {
     const characters = await this.charactersRepository.findOne({
       select: ['guid', 'deleteInfos_Name'],
       where: { deleteInfos_Account: accountId },
@@ -112,7 +137,10 @@ export class CharactersService {
     return { status: 'success' };
   }
 
-  async unban(charactersDto: CharactersDto, accountId: number) {
+  async unban(
+    charactersDto: CharactersDto,
+    accountId: number,
+  ): Promise<StatusResponse> {
     const characters = await this.charactersRepository.findOne({
       select: ['guid', 'name'],
       where: { account: accountId },
@@ -137,27 +165,45 @@ export class CharactersService {
     return { status: 'success' };
   }
 
-  async rename(charactersDto: CharactersDto, accountId: number) {
+  async rename(
+    charactersDto: CharactersDto,
+    accountId: number,
+  ): Promise<StatusResponse> {
     return this.characterCommand(charactersDto, accountId, 'rename', 5);
   }
 
-  async customize(charactersDto: CharactersDto, accountId: number) {
+  async customize(
+    charactersDto: CharactersDto,
+    accountId: number,
+  ): Promise<StatusResponse> {
     return this.characterCommand(charactersDto, accountId, 'customize', 5);
   }
 
-  async changeFaction(charactersDto: CharactersDto, accountId: number) {
+  async changeFaction(
+    charactersDto: CharactersDto,
+    accountId: number,
+  ): Promise<StatusResponse> {
     return this.characterCommand(charactersDto, accountId, 'changeFaction', 10);
   }
 
-  async changeRace(charactersDto: CharactersDto, accountId: number) {
+  async changeRace(
+    charactersDto: CharactersDto,
+    accountId: number,
+  ): Promise<StatusResponse> {
     return this.characterCommand(charactersDto, accountId, 'changeRace', 10);
   }
 
-  async boost(charactersDto: CharactersDto, accountId: number) {
+  async boost(
+    charactersDto: CharactersDto,
+    accountId: number,
+  ): Promise<StatusResponse> {
     return this.characterCommand(charactersDto, accountId, 'level', 5, 80);
   }
 
-  async unstuck(charactersDto: CharactersDto, accountId: number) {
+  async unstuck(
+    charactersDto: CharactersDto,
+    accountId: number,
+  ): Promise<StatusResponse> {
     const characters = await this.charactersRepository.findOne({
       select: ['guid', 'name'],
       where: { account: accountId },
@@ -179,7 +225,7 @@ export class CharactersService {
     command: string,
     coin: number,
     option?: number,
-  ) {
+  ): Promise<StatusResponse> {
     const characters = await this.charactersRepository.findOne({
       select: ['guid', 'name'],
       where: { account: accountId },
@@ -363,11 +409,176 @@ export class CharactersService {
     };
   }
 
+  async getCharacterAchievements(): Promise<CharacterAchievementSummary[]> {
+    const rows = await this.characterAchievementRepository
+      .createQueryBuilder('cha')
+      .leftJoin('characters', 'ch', 'cha.guid = ch.guid')
+      .select([
+        'cha.guid as guid',
+        'ch.account as account',
+        'ch.name as name',
+        'ch.level as level',
+        'ch.race as race',
+        'ch.class as class',
+        'ch.gender as gender',
+        'GROUP_CONCAT(cha.achievement) as achievementIds',
+      ])
+      .groupBy('cha.guid')
+      .getRawMany();
+
+    const allAchievementIds = new Set<number>();
+    for (const row of rows) {
+      if (row.achievementIds) {
+        for (const id of row.achievementIds.split(',')) {
+          allAchievementIds.add(+id);
+        }
+      }
+    }
+
+    const pointsMap = this.dbcService.getAchievementPoints(
+      Array.from(allAchievementIds),
+    );
+
+    return rows
+      .map((row) => {
+        const ids = row.achievementIds
+          ? row.achievementIds.split(',').map(Number)
+          : [];
+        const points = ids.reduce(
+          (sum: number, id: number) => sum + (pointsMap.get(id) || 0),
+          0,
+        );
+        return {
+          guid: row.guid,
+          achievement_points: points,
+          account: row.account,
+          name: row.name,
+          level: row.level,
+          race: row.race,
+          class: row.class,
+          gender: row.gender,
+        };
+      })
+      .sort((a, b) => b.achievement_points - a.achievement_points);
+  }
+
+  async getCharacterAchievementByGuid(
+    guid: number,
+    category?: number,
+  ): Promise<CharacterAchievement[]> {
+    if (category !== undefined) {
+      // Get achievements in this category from DBC
+      const categoryAchievements = this.dbcService.getAchievementsByCategory(
+        category,
+      );
+      const categoryAchievementIds = new Set(
+        categoryAchievements.map((a) => a.ID),
+      );
+
+      // Get character's achievements and filter by category
+      const characterAchievements = await this.characterAchievementRepository.find(
+        { where: { guid } },
+      );
+
+      return characterAchievements.filter((ca) =>
+        categoryAchievementIds.has(ca.achievement),
+      );
+    }
+
+    return this.characterAchievementRepository.find({ where: { guid } });
+  }
+
+  async getAchievementProgress(
+    guid?: number,
+    category?: number,
+  ): Promise<{ error: string } | AchievementProgressEntry[]> {
+    if (!guid) {
+      return { error: 'please insert at least one parameter' };
+    }
+
+    const progressRows = await this.characterAchievementProgressRepository.find(
+      { where: { guid } },
+    );
+
+    const criteriaIds = progressRows.map((p) => p.criteria);
+    const criteriaMap = this.dbcService.getCriteriaByIds(criteriaIds);
+
+    // Map criteria -> achievement, optionally filter by category
+    const achievementIds = new Set<number>();
+    for (const criteria of criteriaMap.values()) {
+      achievementIds.add(criteria.Achievement);
+    }
+
+    const achievements =
+      category !== undefined
+        ? this.dbcService.getAchievementsByIds(
+            Array.from(achievementIds),
+            category,
+          )
+        : this.dbcService.getAchievementsByIds(Array.from(achievementIds));
+    const achievementMap = new Map(achievements.map((a) => [a.ID, a]));
+
+    return progressRows
+      .filter((p) => {
+        const criteria = criteriaMap.get(p.criteria);
+        return criteria && achievementMap.has(criteria.Achievement);
+      })
+      .map((p) => {
+        const criteria = criteriaMap.get(p.criteria);
+        return {
+          achievement: criteria?.Achievement,
+          counter: p.counter,
+        };
+      });
+  }
+
+  getAchievementCategories(): AchievementCategory[] {
+    return this.dbcService.getAllCategories();
+  }
+
+  getAchievementCategory(id: number): AchievementCategory | undefined {
+    return this.dbcService.getCategoryById(id);
+  }
+
+  getAchievementsByCategory(
+    category: number,
+    faction?: string,
+  ): AchievementWithQuantity[] {
+    return this.dbcService.getAchievementsByCategoryWithQuantity(
+      category,
+      faction,
+    );
+  }
+
+  async getCharacterById(guid: number): Promise<CharacterDetail> {
+    const character = await this.charactersRepository
+      .createQueryBuilder('characters')
+      .leftJoin('guild_member', 'gm', 'gm.guid = characters.guid')
+      .leftJoin('guild', 'g', 'g.guildid = gm.guildid')
+      .select([
+        'characters.guid as guid',
+        'characters.name as name',
+        'characters.race as race',
+        'characters.class as class',
+        'characters.level as level',
+        'characters.gender as gender',
+        'g.name as guildName',
+      ])
+      .where('characters.guid = :guid', { guid })
+      .getRawOne();
+
+    if (!character) {
+      throw new NotFoundException('Character not found');
+    }
+
+    return character;
+  }
+
   async getPlayersMonthlyGames(
     excludeType?: number | number[],
     month?: number,
     year?: number,
-  ) {
+  ): Promise<PlayerMonthlyGames[]> {
     const currentDate = new Date();
     const currentYear = year ?? currentDate.getFullYear();
     const currentMonth = month ?? currentDate.getMonth() + 1;
