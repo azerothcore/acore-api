@@ -35,11 +35,6 @@ export const CharactersDatabaseConfig: TypeOrmModuleOptions = {
   database: process.env.CHARACTERS_DATABASE_NAME,
   entities: [join(__dirname, '..', 'characters', '*.entity.{js, ts}')],
   synchronize: true,
-  extra: {
-    sessionVariables: {
-      group_concat_max_len: 65535,
-    },
-  },
 };
 
 export const WebsiteDatabaseConfig: TypeOrmModuleOptions = {

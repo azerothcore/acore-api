@@ -75,24 +75,19 @@ export class CharactersService implements OnModuleInit {
       .leftJoin('characters', 'ch', 'cha.guid = ch.guid')
       .select([
         'cha.guid as guid',
+        'cha.achievement as achievement',
         'ch.account as account',
         'ch.name as name',
         'ch.level as level',
         'ch.race as race',
         'ch.class as class',
         'ch.gender as gender',
-        'GROUP_CONCAT(cha.achievement) as achievementIds',
       ])
-      .groupBy('cha.guid')
       .getRawMany();
 
     const allAchievementIds = new Set<number>();
     for (const row of rows) {
-      if (row.achievementIds) {
-        for (const id of row.achievementIds.split(',')) {
-          allAchievementIds.add(+id);
-        }
-      }
+      allAchievementIds.add(row.achievement);
     }
 
     const achievementIdArray = Array.from(allAchievementIds);
@@ -107,30 +102,33 @@ export class CharactersService implements OnModuleInit {
 
     const ALLIANCE_RACES = new Set([1, 3, 4, 7, 11]);
 
-    this.achievementsSummaryCache = rows
-      .map((row) => {
-        const ids = row.achievementIds
-          ? row.achievementIds.split(',').map(Number)
-          : [];
-        const pointsMap = ALLIANCE_RACES.has(row.race)
-          ? alliancePointsMap
-          : hordePointsMap;
-        const points = ids.reduce(
-          (sum: number, id: number) => sum + (pointsMap.get(id) || 0),
-          0,
-        );
+    const charMap = new Map<number, { info: typeof rows[0]; points: number }>();
 
-        return {
-          guid: row.guid,
-          achievement_points: points,
-          account: row.account,
-          name: row.name,
-          level: row.level,
-          race: row.race,
-          class: row.class,
-          gender: row.gender,
-        };
-      })
+    for (const row of rows) {
+      const entry = charMap.get(row.guid);
+      const pointsMap = ALLIANCE_RACES.has(row.race)
+        ? alliancePointsMap
+        : hordePointsMap;
+      const pts = pointsMap.get(row.achievement) || 0;
+
+      if (entry) {
+        entry.points += pts;
+      } else {
+        charMap.set(row.guid, { info: row, points: pts });
+      }
+    }
+
+    this.achievementsSummaryCache = Array.from(charMap.values())
+      .map(({ info, points }) => ({
+        guid: info.guid,
+        achievement_points: points,
+        account: info.account,
+        name: info.name,
+        level: info.level,
+        race: info.race,
+        class: info.class,
+        gender: info.gender,
+      }))
       .sort((a, b) => b.achievement_points - a.achievement_points);
 
     this.logger.log(
