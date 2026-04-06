@@ -1,7 +1,7 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ synchronize: false })
-export class BattlegroundDeserters extends BaseEntity {
+export class BattlegroundDeserters {
   @PrimaryGeneratedColumn()
   guid: number;
 

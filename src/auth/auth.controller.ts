@@ -17,14 +17,19 @@ import { AuthService } from './auth.service';
 import { AccountDto } from './dto/account.dto';
 import { AuthGuard } from '../shared/auth.guard';
 import { Account } from './account.decorator';
-import { getConnection } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { Account as AccountEntity } from './account.entity';
 import { AccountPasswordDto } from './dto/account_password.dto';
 import { EmailDto } from './dto/email.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    @InjectDataSource('authConnection')
+    private readonly authDataSource: DataSource,
+  ) {}
 
   @Post('/signup')
   async signUp(
@@ -52,7 +57,7 @@ export class AuthController {
   }
 
   @Patch('/updateMyPassword')
-  @UseGuards(new AuthGuard())
+  @UseGuards(AuthGuard)
   async updatePassword(
     @Body(ValidationPipe) accountPasswordDto: AccountPasswordDto,
     @Res() response: Response,
@@ -66,7 +71,7 @@ export class AuthController {
   }
 
   @Patch('/updateMyEmail')
-  @UseGuards(new AuthGuard())
+  @UseGuards(AuthGuard)
   async updateEmail(
     @Body(ValidationPipe) emailDto: EmailDto,
     @Account('id') accountId: number,
@@ -75,7 +80,7 @@ export class AuthController {
   }
 
   @Patch('/unban')
-  @UseGuards(new AuthGuard())
+  @UseGuards(AuthGuard)
   async unban(@Account('id') accountId: number): Promise<{ status: string }> {
     return this.authService.unban(accountId);
   }
@@ -98,7 +103,7 @@ export class AuthController {
 
   @Get('/pulse/:days')
   async pulse(@Param('days') days: number): Promise<AccountEntity[]> {
-    return await getConnection('authConnection')
+    return await this.authDataSource
       .getRepository(AccountEntity)
       .createQueryBuilder('auth')
       .select(['COUNT(*) AS accounts', 'COUNT(DISTINCT(last_ip)) AS IPs'])

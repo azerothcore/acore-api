@@ -1,7 +1,7 @@
-import { BaseEntity, Column, Entity, PrimaryColumn } from 'typeorm';
+import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity({ synchronize: false })
-export class LogArenaMemberstats extends BaseEntity {
+export class LogArenaMemberstats {
   @PrimaryColumn()
   fight_id: number;
 

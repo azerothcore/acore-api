@@ -1,7 +1,7 @@
-import { BaseEntity, Column, Entity, PrimaryColumn } from 'typeorm';
+import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity({ synchronize: false })
-export class CharacterAchievement extends BaseEntity {
+export class CharacterAchievement {
   @PrimaryColumn()
   guid: number;
 

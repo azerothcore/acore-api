@@ -1,7 +1,7 @@
-import { BaseEntity, Column, Entity, PrimaryColumn } from 'typeorm';
+import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity({ synchronize: false })
-export class AccountBanned extends BaseEntity {
+export class AccountBanned {
   @PrimaryColumn()
   id: number;
 

@@ -1,5 +1,4 @@
 import {
-  BaseEntity,
   Column,
   CreateDateColumn,
   Entity,
@@ -8,7 +7,7 @@ import {
 } from 'typeorm';
 
 @Entity()
-export class Post extends BaseEntity {
+export class Post {
   @PrimaryGeneratedColumn({ unsigned: true })
   id: number;
 

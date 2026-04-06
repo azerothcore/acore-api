@@ -1,7 +1,7 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
-export class AccountPassword extends BaseEntity {
+export class AccountPassword {
   @PrimaryGeneratedColumn({ unsigned: true })
   id: number;
 

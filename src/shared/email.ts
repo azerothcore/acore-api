@@ -1,5 +1,5 @@
 import { createTransport } from 'nodemailer';
-import { fromString } from 'html-to-text';
+import { convert } from 'html-to-text';
 import { Account } from '../auth/account.entity';
 
 interface IEmail {
@@ -40,7 +40,7 @@ export class Email {
       to: this.to,
       subject,
       html: template,
-      text: fromString(template),
+      text: convert(template),
     };
     await Email.newTransport(mailOptions);
   }

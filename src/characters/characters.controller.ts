@@ -9,7 +9,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
-import { getConnection } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { Account } from '../auth/account.decorator';
 import { AccountAccess } from '../auth/account_access.entity';
 import { AuthGuard } from '../shared/auth.guard';
@@ -31,11 +32,17 @@ import { Worldstates } from './worldstates.entity';
 
 @Controller('characters')
 export class CharactersController {
-  constructor(private readonly charactersService: CharactersService) {}
+  constructor(
+    private readonly charactersService: CharactersService,
+    @InjectDataSource('charactersConnection')
+    private readonly charactersDataSource: DataSource,
+    @InjectDataSource('authConnection')
+    private readonly authDataSource: DataSource,
+  ) {}
 
   @Get('/online')
   async online() {
-    const accountGMs = await getConnection('authConnection')
+    const accountGMs = await this.authDataSource
       .getRepository(AccountAccess)
       .createQueryBuilder('account_access')
       .select(['id'])
@@ -44,8 +51,7 @@ export class CharactersController {
 
     const GmIds = accountGMs.map((aa) => aa.id);
 
-    const connection = getConnection('charactersConnection');
-    const characters = await connection
+    const characters = await this.charactersDataSource
       .getRepository(Characters)
       .createQueryBuilder('characters')
       .leftJoinAndSelect(GuildMember, 'gm', 'gm.guid = characters.guid')
@@ -72,8 +78,7 @@ export class CharactersController {
   /* characters statistics */
   @Get('/stats')
   async characters_stats() {
-    const connection = getConnection('charactersConnection');
-    return await connection
+    return await this.charactersDataSource
       .getRepository(Characters)
       .createQueryBuilder('characters')
       .select([
@@ -87,12 +92,11 @@ export class CharactersController {
   /* characters data */
   @Get('/search_characters')
   async character_data(@Query('name') name: string) {
-    const connection = getConnection('charactersConnection');
+    const repo = this.charactersDataSource.getRepository(Characters);
 
     // If 'name' parameter is null  or void, return all characters
     if (!name || name.trim() === '') {
-      return await connection
-        .getRepository(Characters)
+      return await repo
         .createQueryBuilder('characters')
         .select([
           'characters.guid as guid',
@@ -106,8 +110,7 @@ export class CharactersController {
     }
 
     // if 'name" is there, search with filter
-    return await connection
-      .getRepository(Characters)
+    return await repo
       .createQueryBuilder('characters')
       .select([
         'characters.guid as guid',
@@ -137,8 +140,7 @@ export class CharactersController {
       where = `UPPER(name) LIKE UPPER('%${query['name']}%')`;
     }
 
-    const connection = getConnection('charactersConnection');
-    return await connection
+    return await this.charactersDataSource
       .getRepository(BattlegroundDeserters)
       .createQueryBuilder('battleground_deserters')
       .innerJoinAndSelect(
@@ -167,8 +169,7 @@ export class CharactersController {
 
   @Get('/arena_team/id/:arenaTeamId')
   async arena_team_id(@Param('arenaTeamId') arenaTeamId: number) {
-    const connection = getConnection('charactersConnection');
-    return await connection
+    return await this.charactersDataSource
       .getRepository(ArenaTeam)
       .createQueryBuilder('arena_team')
       .innerJoinAndSelect(Characters, 'c', 'c.guid = arena_team.captainGuid')
@@ -185,8 +186,7 @@ export class CharactersController {
 
   @Get('/arena_team/type/:type/')
   async arena_team(@Param('type') type: number) {
-    const connection = getConnection('charactersConnection');
-    return await connection
+    return await this.charactersDataSource
       .getRepository(ArenaTeam)
       .createQueryBuilder('arena_team')
       .innerJoinAndSelect(Characters, 'c', 'c.guid = arena_team.captainGuid')
@@ -204,8 +204,7 @@ export class CharactersController {
 
   @Get('/arena_team_member/:arenaTeamId')
   async arena_team_member(@Param('arenaTeamId') arenaTeamId: number) {
-    const connection = getConnection('charactersConnection');
-    return await connection
+    return await this.charactersDataSource
       .getRepository(ArenaTeamMember)
       .createQueryBuilder('arena_team_member')
       .innerJoinAndSelect(Characters, 'c', 'c.guid = arena_team_member.guid')
@@ -241,9 +240,7 @@ export class CharactersController {
   /* player arena team */
   @Get('/player_arena_team/:guid')
   async player_arena_team(@Param('guid') guid: number) {
-    const connection = getConnection('charactersConnection');
-
-    const charData = await connection
+    const charData = await this.charactersDataSource
       .getRepository(Characters)
       .createQueryBuilder('characters')
       .select([
@@ -257,7 +254,7 @@ export class CharactersController {
       .where('guid=:guid', { guid })
       .getRawOne();
 
-    const arenaTeamsData = await connection
+    const arenaTeamsData = await this.charactersDataSource
       .getRepository(ArenaTeamMember)
       .createQueryBuilder('arena_team_member')
       .leftJoinAndSelect(
@@ -280,7 +277,7 @@ export class CharactersController {
       .orderBy({ 'at.type': 'ASC' })
       .getRawMany();
 
-    const characterArenaStats = await connection
+    const characterArenaStats = await this.charactersDataSource
       .getRepository(CharacterArenaStats)
       .createQueryBuilder('character_arena_stats')
       .select([
@@ -307,7 +304,7 @@ export class CharactersController {
   }
 
   @Get('/recoveryItemList/:guid')
-  @UseGuards(new AuthGuard())
+  @UseGuards(AuthGuard)
   async recoveryItemList(
     @Param('guid') guid: number,
     @Account('id') accountId: number,
@@ -316,7 +313,7 @@ export class CharactersController {
   }
 
   @Post('/recoveryItem')
-  @UseGuards(new AuthGuard())
+  @UseGuards(AuthGuard)
   async recoveryItem(
     @Body() recoveryItemDto: RecoveryItemDTO,
     @Account('id') accountId: number,
@@ -325,7 +322,7 @@ export class CharactersController {
   }
 
   @Get('/recoveryHeroList')
-  @UseGuards(new AuthGuard())
+  @UseGuards(AuthGuard)
   async recoveryHeroList(
     @Account('id') accountId: number,
   ): Promise<Characters[]> {
@@ -333,7 +330,7 @@ export class CharactersController {
   }
 
   @Post('/recoveryHero')
-  @UseGuards(new AuthGuard())
+  @UseGuards(AuthGuard)
   async recoveryHero(
     @Body() charactersDto: CharactersDto,
     @Account('id') accountId: number,
@@ -342,7 +339,7 @@ export class CharactersController {
   }
 
   @Patch('/unban')
-  @UseGuards(new AuthGuard())
+  @UseGuards(AuthGuard)
   async unban(
     @Body() charactersDto: CharactersDto,
     @Account('id') accountId: number,
@@ -351,7 +348,7 @@ export class CharactersController {
   }
 
   @Post('/rename')
-  @UseGuards(new AuthGuard())
+  @UseGuards(AuthGuard)
   async rename(
     @Body() charactersDto: CharactersDto,
     @Account('id') accountId: number,
@@ -360,7 +357,7 @@ export class CharactersController {
   }
 
   @Post('/customize')
-  @UseGuards(new AuthGuard())
+  @UseGuards(AuthGuard)
   async customize(
     @Body() charactersDto: CharactersDto,
     @Account('id') accountId: number,
@@ -369,7 +366,7 @@ export class CharactersController {
   }
 
   @Post('/changeFaction')
-  @UseGuards(new AuthGuard())
+  @UseGuards(AuthGuard)
   async changeFaction(
     @Body() charactersDto: CharactersDto,
     @Account('id') accountId: number,
@@ -378,7 +375,7 @@ export class CharactersController {
   }
 
   @Post('/changeRace')
-  @UseGuards(new AuthGuard())
+  @UseGuards(AuthGuard)
   async changeRace(
     @Body() charactersDto: CharactersDto,
     @Account('id') accountId: number,
@@ -387,7 +384,7 @@ export class CharactersController {
   }
 
   @Post('/boost')
-  @UseGuards(new AuthGuard())
+  @UseGuards(AuthGuard)
   async boost(
     @Body() charactersDto: CharactersDto,
     @Account('id') accountId: number,
@@ -396,7 +393,7 @@ export class CharactersController {
   }
 
   @Post('/unstuck')
-  @UseGuards(new AuthGuard())
+  @UseGuards(AuthGuard)
   async unstuck(
     @Body() charactersDto: CharactersDto,
     @Account('id') accountId: number,

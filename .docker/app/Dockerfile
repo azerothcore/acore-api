@@ -1,10 +1,11 @@
-FROM node:12.13-alpine As development
+FROM node:22-alpine As development
+
+RUN apk add --no-cache python3 make g++
 
 WORKDIR /usr/src/app
 
 COPY package*.json ./
 
-RUN npm i -g @nestjs/cli
 RUN npm install
 
 COPY . .

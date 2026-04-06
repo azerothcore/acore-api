@@ -11,8 +11,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import {
   AchievementCategory,
   AchievementWithQuantity,
-} from 'src/storage/dbc.interface';
-import { Like, Repository } from 'typeorm';
+} from '../storage/dbc.interface';
+import { DataSource, Like, Repository } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { AccountInformation } from '../auth/account_information.entity';
 import { Misc } from '../shared/misc';
 import { Soap } from '../shared/soap';
 import { DbcService } from '../storage/dbc.service';
@@ -59,6 +61,8 @@ export class CharactersService implements OnModuleInit {
     private readonly characterAchievementRepository: Repository<CharacterAchievement>,
     @InjectRepository(CharacterAchievementProgress, 'charactersConnection')
     private readonly characterAchievementProgressRepository: Repository<CharacterAchievementProgress>,
+    @InjectDataSource('authConnection')
+    private readonly authDataSource: DataSource,
     private readonly dbcService: DbcService,
   ) {}
 
@@ -102,7 +106,10 @@ export class CharactersService implements OnModuleInit {
 
     const ALLIANCE_RACES = new Set([1, 3, 4, 7, 11]);
 
-    const charMap = new Map<number, { info: typeof rows[0]; points: number }>();
+    const charMap = new Map<
+      number,
+      { info: (typeof rows)[0]; points: number }
+    >();
 
     for (const row of rows) {
       const entry = charMap.get(row.guid);
@@ -138,7 +145,7 @@ export class CharactersService implements OnModuleInit {
 
   async search_worldstates(param: Worldstates): Promise<Worldstates[]> {
     return await this.worldstatesRepository.find({
-      comment: Like(`%${param.comment}%`),
+      where: { comment: Like(`%${param.comment}%`) },
     });
   }
 
@@ -208,7 +215,11 @@ export class CharactersService implements OnModuleInit {
       throw new NotFoundException(['Account with that character not found']);
     }
 
-    await Misc.setCoin(10, accountId);
+    await Misc.setCoin(
+      10,
+      accountId,
+      this.authDataSource.getRepository(AccountInformation),
+    );
 
     Soap.command(
       `character deleted restore ${charactersDto.guid} ${characters.deleteInfos_Name} ${accountId}`,
@@ -238,7 +249,11 @@ export class CharactersService implements OnModuleInit {
       throw new BadRequestException('Your character is not ban!');
     }
 
-    await Misc.setCoin(5, accountId);
+    await Misc.setCoin(
+      5,
+      accountId,
+      this.authDataSource.getRepository(AccountInformation),
+    );
 
     Soap.command(`unban character ${characters.name}`);
 
@@ -315,7 +330,11 @@ export class CharactersService implements OnModuleInit {
       throw new NotFoundException(['Account with that character not found']);
     }
 
-    await Misc.setCoin(coin, accountId);
+    await Misc.setCoin(
+      coin,
+      accountId,
+      this.authDataSource.getRepository(AccountInformation),
+    );
 
     Soap.command(`character ${command} ${characters.name} ${option}`);
 
@@ -510,17 +529,15 @@ export class CharactersService implements OnModuleInit {
   ): Promise<CharacterAchievement[]> {
     if (category !== undefined) {
       // Get achievements in this category from DBC
-      const categoryAchievements = this.dbcService.getAchievementsByCategory(
-        category,
-      );
+      const categoryAchievements =
+        this.dbcService.getAchievementsByCategory(category);
       const categoryAchievementIds = new Set(
         categoryAchievements.map((a) => a.ID),
       );
 
       // Get character's achievements and filter by category
-      const characterAchievements = await this.characterAchievementRepository.find(
-        { where: { guid } },
-      );
+      const characterAchievements =
+        await this.characterAchievementRepository.find({ where: { guid } });
 
       return characterAchievements.filter((ca) =>
         categoryAchievementIds.has(ca.achievement),

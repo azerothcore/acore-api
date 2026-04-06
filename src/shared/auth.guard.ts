@@ -9,11 +9,17 @@ import { verify } from 'jsonwebtoken';
 import { Account } from '../auth/account.entity';
 import { AccountPassword } from '../auth/account_password.entity';
 import { AccountInformation } from '../auth/account_information.entity';
-import { getRepository } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   private decoded: any;
+
+  constructor(
+    @InjectDataSource('authConnection')
+    private readonly authDataSource: DataSource,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -60,12 +66,11 @@ export class AuthGuard implements CanActivate {
       }
     }
 
-    const accountExists = await getRepository(
-      Account,
-      'authConnection',
-    ).findOne({
-      where: { id: this.decoded.id },
-    });
+    const accountExists = await this.authDataSource
+      .getRepository(Account)
+      .findOne({
+        where: { id: this.decoded.id },
+      });
 
     if (!accountExists) {
       throw new UnauthorizedException([
@@ -76,12 +81,11 @@ export class AuthGuard implements CanActivate {
     delete accountExists.salt;
     delete accountExists.verifier;
 
-    const accountPassword = await getRepository(
-      AccountPassword,
-      'authConnection',
-    ).findOne({
-      where: { id: this.decoded.id },
-    });
+    const accountPassword = await this.authDataSource
+      .getRepository(AccountPassword)
+      .findOne({
+        where: { id: this.decoded.id },
+      });
 
     if (
       request.url === '/auth/updateMyPassword' &&
@@ -98,12 +102,11 @@ export class AuthGuard implements CanActivate {
       }
     }
 
-    const accountInformation = await getRepository(
-      AccountInformation,
-      'authConnection',
-    ).findOne({
-      where: { id: this.decoded.id },
-    });
+    const accountInformation = await this.authDataSource
+      .getRepository(AccountInformation)
+      .findOne({
+        where: { id: this.decoded.id },
+      });
 
     request.account = { ...accountExists, ...accountInformation };
 

@@ -2,16 +2,15 @@ import { AccountInformation } from '../auth/account_information.entity';
 import { BadRequestException } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { BigInteger } from 'jsbn';
-import * as sha1 from 'js-sha1';
-import { getRepository } from 'typeorm';
+import { sha1 } from 'js-sha1';
+import { Repository } from 'typeorm';
 
 export class Misc {
-  static async setCoin(coin: number, accountId: number): Promise<void> {
-    const accountInformationRepo = getRepository(
-      AccountInformation,
-      'authConnection',
-    );
-
+  static async setCoin(
+    coin: number,
+    accountId: number,
+    accountInformationRepo: Repository<AccountInformation>,
+  ): Promise<void> {
     const accountInformation = await accountInformationRepo.findOne({
       where: { id: accountId },
     });

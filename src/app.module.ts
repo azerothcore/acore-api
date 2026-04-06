@@ -10,6 +10,7 @@ import {
   WebsiteDatabaseConfig,
   WorldDatabaseConfig,
 } from './config/database.config';
+import { AuthGuard } from './shared/auth.guard';
 import { WebsiteModule } from './website/website.module';
 import { WorldModule } from './world/world.module';
 
@@ -28,5 +29,6 @@ const websiteEnabled = process.env.WEBSITE_MODULE_ENABLED === 'true';
     WorldModule,
     CharactersModule,
   ],
+  providers: [AuthGuard],
 })
 export class AppModule {}
