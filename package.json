@@ -31,6 +31,7 @@
     "@nestjs/common": "^7.6.13",
     "@nestjs/core": "^7.6.13",
     "@nestjs/platform-express": "^7.6.13",
+    "@nestjs/schedule": "6.1.1",
     "@nestjs/typeorm": "^7.1.5",
     "better-sqlite3": "12.8.0",
     "class-transformer": "^0.4.0",

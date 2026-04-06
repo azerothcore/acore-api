@@ -1,27 +1,32 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { AuthModule } from './auth/auth.module';
+import { CharactersModule } from './characters/characters.module';
 import {
   AuthDatabaseConfig,
-  WorldDatabaseConfig,
   CharactersDatabaseConfig,
   WebsiteDatabaseConfig,
+  WorldDatabaseConfig,
 } from './config/database.config';
-import { AuthModule } from './auth/auth.module';
-import { WorldModule } from './world/world.module';
-import { CharactersModule } from './characters/characters.module';
 import { WebsiteModule } from './website/website.module';
+import { WorldModule } from './world/world.module';
+
+const websiteEnabled = process.env.WEBSITE_MODULE_ENABLED === 'true';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRoot(AuthDatabaseConfig),
     TypeOrmModule.forRoot(WorldDatabaseConfig),
     TypeOrmModule.forRoot(CharactersDatabaseConfig),
-    TypeOrmModule.forRoot(WebsiteDatabaseConfig),
+    ...(websiteEnabled
+      ? [TypeOrmModule.forRoot(WebsiteDatabaseConfig), WebsiteModule]
+      : []),
     AuthModule,
     WorldModule,
     CharactersModule,
-    WebsiteModule,
   ],
 })
 export class AppModule {}

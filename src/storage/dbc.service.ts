@@ -34,6 +34,13 @@ export class DbcService implements OnModuleDestroy {
     return new Map(rows.map((r) => [r.ID, r.Points]));
   }
 
+  getAllAchievementPoints(): Map<number, number> {
+    const rows = this.db
+      .prepare('SELECT ID, Points FROM achievement WHERE Points > 0')
+      .all() as { ID: number; Points: number }[];
+    return new Map(rows.map((r) => [r.ID, r.Points]));
+  }
+
   getAchievementsByIds(
     achievementIds: number[],
     category?: number,

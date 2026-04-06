@@ -1,8 +1,11 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -35,7 +38,10 @@ import { RecoveryItem } from './recovery_item.entity';
 import { Worldstates } from './worldstates.entity';
 
 @Injectable()
-export class CharactersService {
+export class CharactersService implements OnModuleInit {
+  private readonly logger = new Logger(CharactersService.name);
+  private achievementsSummaryCache: CharacterAchievementSummary[] = [];
+
   constructor(
     @InjectRepository(Characters, 'charactersConnection')
     private readonly charactersRepository: Repository<Characters>,
@@ -55,6 +61,71 @@ export class CharactersService {
     private readonly characterAchievementProgressRepository: Repository<CharacterAchievementProgress>,
     private readonly dbcService: DbcService,
   ) {}
+
+  async onModuleInit() {
+    await this.refreshAchievementsSummary();
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async refreshAchievementsSummary() {
+    const startTime = Date.now();
+    const rows = await this.characterAchievementRepository
+      .createQueryBuilder('cha')
+      .leftJoin('characters', 'ch', 'cha.guid = ch.guid')
+      .select([
+        'cha.guid as guid',
+        'ch.account as account',
+        'ch.name as name',
+        'ch.level as level',
+        'ch.race as race',
+        'ch.class as class',
+        'ch.gender as gender',
+        'GROUP_CONCAT(cha.achievement) as achievementIds',
+      ])
+      .groupBy('cha.guid')
+      .getRawMany();
+
+    const allAchievementIds = new Set<number>();
+    for (const row of rows) {
+      if (row.achievementIds) {
+        for (const id of row.achievementIds.split(',')) {
+          allAchievementIds.add(+id);
+        }
+      }
+    }
+
+    const pointsMap = this.dbcService.getAchievementPoints(
+      Array.from(allAchievementIds),
+    );
+
+    this.achievementsSummaryCache = rows
+      .map((row) => {
+        const ids = row.achievementIds
+          ? row.achievementIds.split(',').map(Number)
+          : [];
+        const points = ids.reduce(
+          (sum: number, id: number) => sum + (pointsMap.get(id) || 0),
+          0,
+        );
+
+        return {
+          guid: row.guid,
+          achievement_points: points,
+          account: row.account,
+          name: row.name,
+          level: row.level,
+          race: row.race,
+          class: row.class,
+          gender: row.gender,
+        };
+      })
+      .sort((a, b) => b.achievement_points - a.achievement_points)
+      .slice(0, 100);
+
+    this.logger.log(
+      `Achievements summary refreshed in ${Date.now() - startTime}ms`,
+    );
+  }
 
   async search_worldstates(param: Worldstates): Promise<Worldstates[]> {
     return await this.worldstatesRepository.find({
@@ -409,57 +480,8 @@ export class CharactersService {
     };
   }
 
-  async getCharacterAchievements(): Promise<CharacterAchievementSummary[]> {
-    const rows = await this.characterAchievementRepository
-      .createQueryBuilder('cha')
-      .leftJoin('characters', 'ch', 'cha.guid = ch.guid')
-      .select([
-        'cha.guid as guid',
-        'ch.account as account',
-        'ch.name as name',
-        'ch.level as level',
-        'ch.race as race',
-        'ch.class as class',
-        'ch.gender as gender',
-        'GROUP_CONCAT(cha.achievement) as achievementIds',
-      ])
-      .groupBy('cha.guid')
-      .getRawMany();
-
-    const allAchievementIds = new Set<number>();
-    for (const row of rows) {
-      if (row.achievementIds) {
-        for (const id of row.achievementIds.split(',')) {
-          allAchievementIds.add(+id);
-        }
-      }
-    }
-
-    const pointsMap = this.dbcService.getAchievementPoints(
-      Array.from(allAchievementIds),
-    );
-
-    return rows
-      .map((row) => {
-        const ids = row.achievementIds
-          ? row.achievementIds.split(',').map(Number)
-          : [];
-        const points = ids.reduce(
-          (sum: number, id: number) => sum + (pointsMap.get(id) || 0),
-          0,
-        );
-        return {
-          guid: row.guid,
-          achievement_points: points,
-          account: row.account,
-          name: row.name,
-          level: row.level,
-          race: row.race,
-          class: row.class,
-          gender: row.gender,
-        };
-      })
-      .sort((a, b) => b.achievement_points - a.achievement_points);
+  getCharacterAchievements(): CharacterAchievementSummary[] {
+    return this.achievementsSummaryCache;
   }
 
   async getCharacterAchievementByGuid(
