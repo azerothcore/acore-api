@@ -121,7 +121,8 @@ export class DbcService implements OnModuleDestroy {
     faction?: string,
   ): AchievementWithQuantity[] {
     let sql = `SELECT a.ID, a.Name, a.Description, a.Points, a.icon,
-      COALESCE((SELECT ac.Quantity FROM achievementCriteria ac WHERE ac.Achievement = a.ID LIMIT 1), 0) AS Quantity
+      COALESCE((SELECT ac.Quantity FROM achievementCriteria ac WHERE ac.Achievement = a.ID LIMIT 1), 0) AS Quantity,
+      a.Category as category
       FROM achievement a WHERE a.Category = ?`;
     const params: number[] = [category];
     if (faction === 'alliance') {
@@ -130,5 +131,18 @@ export class DbcService implements OnModuleDestroy {
       sql += ' AND (a.Faction = -1 OR a.Faction = 0)';
     }
     return this.db.prepare(sql).all(...params) as AchievementWithQuantity[];
+  }
+
+  getAllAchievementsWithQuantity(faction?: string): AchievementWithQuantity[] {
+    let sql = `SELECT a.ID, a.Name, a.Description, a.Points, a.icon,
+      COALESCE((SELECT ac.Quantity FROM achievementCriteria ac WHERE ac.Achievement = a.ID LIMIT 1), 0) AS Quantity,
+      a.Category as category
+      FROM achievement a`;
+    if (faction === 'alliance') {
+      sql += ' WHERE (a.Faction = -1 OR a.Faction = 1)';
+    } else if (faction === 'horde') {
+      sql += ' WHERE (a.Faction = -1 OR a.Faction = 0)';
+    }
+    return this.db.prepare(sql).all() as AchievementWithQuantity[];
   }
 }

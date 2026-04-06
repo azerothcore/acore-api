@@ -592,6 +592,10 @@ export class CharactersService implements OnModuleInit {
     );
   }
 
+  getAllAchievements(faction?: string): AchievementWithQuantity[] {
+    return this.dbcService.getAllAchievementsWithQuantity(faction);
+  }
+
   async getCharacterById(guid: number): Promise<CharacterDetail> {
     const character = await this.charactersRepository
       .createQueryBuilder('characters')

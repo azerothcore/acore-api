@@ -19,6 +19,7 @@ export interface AchievementWithQuantity {
   Points: number;
   icon: string;
   Quantity: number;
+  category: number;
 }
 
 export interface AchievementCriteria {

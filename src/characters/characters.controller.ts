@@ -449,11 +449,17 @@ export class CharactersController {
   }
 
   @Get('/achievement')
-  async achievementsByCategory(
-    @Query('category') category: number,
+  async achievements(
+    @Query('category') category?: string,
     @Query('faction') faction?: string,
   ) {
-    return this.charactersService.getAchievementsByCategory(+category, faction);
+    if (category !== undefined) {
+      return this.charactersService.getAchievementsByCategory(
+        +category,
+        faction,
+      );
+    }
+    return this.charactersService.getAllAchievements(faction);
   }
 
   @Get('/log_arena_fights')
