@@ -23,21 +23,22 @@ export class DbcService implements OnModuleDestroy {
     this.db.close();
   }
 
-  getAchievementPoints(achievementIds: number[]): Map<number, number> {
+  getAchievementPoints(
+    achievementIds: number[],
+    faction?: number,
+  ): Map<number, number> {
     if (achievementIds.length === 0) return new Map();
     const placeholders = achievementIds.map(() => '?').join(',');
-    const rows = this.db
-      .prepare(
-        `SELECT ID, Points FROM achievement WHERE ID IN (${placeholders})`,
-      )
-      .all(...achievementIds) as { ID: number; Points: number }[];
-    return new Map(rows.map((r) => [r.ID, r.Points]));
-  }
-
-  getAllAchievementPoints(): Map<number, number> {
-    const rows = this.db
-      .prepare('SELECT ID, Points FROM achievement WHERE Points > 0')
-      .all() as { ID: number; Points: number }[];
+    let sql = `SELECT ID, Points FROM achievement WHERE ID IN (${placeholders})`;
+    const params: number[] = [...achievementIds];
+    if (faction !== undefined) {
+      sql += ' AND (Faction = -1 OR Faction = ?)';
+      params.push(faction);
+    }
+    const rows = this.db.prepare(sql).all(...params) as {
+      ID: number;
+      Points: number;
+    }[];
     return new Map(rows.map((r) => [r.ID, r.Points]));
   }
 

@@ -407,8 +407,13 @@ export class CharactersController {
   /* Achievements */
 
   @Get('/character_achievement')
-  async characterAchievement() {
-    return this.charactersService.getCharacterAchievements();
+  characterAchievement(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const p = Math.max(1, +(page || 1));
+    const l = Math.min(100, Math.max(1, +(limit || 25)));
+    return this.charactersService.getCharacterAchievements(p, l);
   }
 
   @Get('/character_achievement/:guid')

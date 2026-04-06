@@ -69,6 +69,7 @@ export class CharactersService implements OnModuleInit {
   @Cron(CronExpression.EVERY_HOUR)
   async refreshAchievementsSummary() {
     const startTime = Date.now();
+
     const rows = await this.characterAchievementRepository
       .createQueryBuilder('cha')
       .leftJoin('characters', 'ch', 'cha.guid = ch.guid')
@@ -94,15 +95,26 @@ export class CharactersService implements OnModuleInit {
       }
     }
 
-    const pointsMap = this.dbcService.getAchievementPoints(
-      Array.from(allAchievementIds),
+    const achievementIdArray = Array.from(allAchievementIds);
+    const alliancePointsMap = this.dbcService.getAchievementPoints(
+      achievementIdArray,
+      1,
     );
+    const hordePointsMap = this.dbcService.getAchievementPoints(
+      achievementIdArray,
+      0,
+    );
+
+    const ALLIANCE_RACES = new Set([1, 3, 4, 7, 11]);
 
     this.achievementsSummaryCache = rows
       .map((row) => {
         const ids = row.achievementIds
           ? row.achievementIds.split(',').map(Number)
           : [];
+        const pointsMap = ALLIANCE_RACES.has(row.race)
+          ? alliancePointsMap
+          : hordePointsMap;
         const points = ids.reduce(
           (sum: number, id: number) => sum + (pointsMap.get(id) || 0),
           0,
@@ -119,8 +131,7 @@ export class CharactersService implements OnModuleInit {
           gender: row.gender,
         };
       })
-      .sort((a, b) => b.achievement_points - a.achievement_points)
-      .slice(0, 100);
+      .sort((a, b) => b.achievement_points - a.achievement_points);
 
     this.logger.log(
       `Achievements summary refreshed in ${Date.now() - startTime}ms`,
@@ -480,8 +491,19 @@ export class CharactersService implements OnModuleInit {
     };
   }
 
-  getCharacterAchievements(): CharacterAchievementSummary[] {
-    return this.achievementsSummaryCache;
+  getCharacterAchievements(
+    page: number,
+    limit: number,
+  ): {
+    data: CharacterAchievementSummary[];
+    total: number;
+    page: number;
+    limit: number;
+  } {
+    const total = this.achievementsSummaryCache.length;
+    const start = (page - 1) * limit;
+    const data = this.achievementsSummaryCache.slice(start, start + limit);
+    return { data, total, page, limit };
   }
 
   async getCharacterAchievementByGuid(
