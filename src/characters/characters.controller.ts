@@ -404,6 +404,58 @@ export class CharactersController {
     return this.charactersService.unstuck(charactersDto, accountId);
   }
 
+  /* Achievements */
+
+  @Get('/character_achievement')
+  characterAchievement(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const p = Math.max(1, +(page || 1));
+    const l = Math.min(100, Math.max(1, +(limit || 25)));
+    return this.charactersService.getCharacterAchievements(p, l);
+  }
+
+  @Get('/character_achievement/:guid')
+  async characterAchievementByGuid(
+    @Param('guid') guid: number,
+    @Query('category') category?: number,
+  ) {
+    return this.charactersService.getCharacterAchievementByGuid(
+      +guid,
+      category !== undefined ? +category : undefined,
+    );
+  }
+
+  @Get('/achievement_progress')
+  async achievementProgress(
+    @Query('guid') guid?: number,
+    @Query('category') category?: number,
+  ) {
+    return this.charactersService.getAchievementProgress(
+      guid !== undefined ? +guid : undefined,
+      category !== undefined ? +category : undefined,
+    );
+  }
+
+  @Get('/achievement_category')
+  async achievementCategories() {
+    return this.charactersService.getAchievementCategories();
+  }
+
+  @Get('/achievement_category/:id')
+  async achievementCategory(@Param('id') id: number) {
+    return this.charactersService.getAchievementCategory(+id);
+  }
+
+  @Get('/achievement')
+  async achievementsByCategory(
+    @Query('category') category: number,
+    @Query('faction') faction?: string,
+  ) {
+    return this.charactersService.getAchievementsByCategory(+category, faction);
+  }
+
   @Get('/log_arena_fights')
   async getLogArenaFights(
     @Query() query: LogArenaFightsQueryDto,
@@ -429,5 +481,10 @@ export class CharactersController {
       month,
       year,
     );
+  }
+
+  @Get('/:guid')
+  async getCharacterById(@Param('guid') guid: number) {
+    return this.charactersService.getCharacterById(+guid);
   }
 }
