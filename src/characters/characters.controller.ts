@@ -407,10 +407,11 @@ export class CharactersController {
   characterAchievement(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('name') name?: string,
   ) {
     const p = Math.max(1, +(page || 1));
     const l = Math.min(100, Math.max(1, +(limit || 25)));
-    return this.charactersService.getCharacterAchievements(p, l);
+    return this.charactersService.getCharacterAchievements(p, l, name);
   }
 
   @Get('/character_achievement/:guid')

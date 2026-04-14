@@ -511,15 +511,23 @@ export class CharactersService implements OnModuleInit {
   getCharacterAchievements(
     page: number,
     limit: number,
+    name?: string,
   ): {
     data: CharacterAchievementSummary[];
     total: number;
     page: number;
     limit: number;
   } {
-    const total = this.achievementsSummaryCache.length;
+    let source = this.achievementsSummaryCache;
+
+    if (name && name.trim() !== '') {
+      const query = name.toLowerCase();
+      source = source.filter((c) => c.name?.toLowerCase().includes(query));
+    }
+
+    const total = source.length;
     const start = (page - 1) * limit;
-    const data = this.achievementsSummaryCache.slice(start, start + limit);
+    const data = source.slice(start, start + limit);
     return { data, total, page, limit };
   }
 
