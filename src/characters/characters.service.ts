@@ -368,10 +368,17 @@ export class CharactersService implements OnModuleInit {
         'laf.winner as winner',
         'laf.time as time',
         'laf.loser as loser',
+        'laf.duration as duration',
+        'laf.winner_tr as winner_tr',
+        'laf.winner_mmr as winner_mmr',
+        'laf.winner_tr_change as winner_tr_change',
+        'laf.loser_tr as loser_tr',
+        'laf.loser_mmr as loser_mmr',
+        'laf.loser_tr_change as loser_tr_change',
         'CASE WHEN laf.type IN (1, 4) THEN "" ELSE COALESCE(winner_team.name, "") END as winner_name',
         'CASE WHEN laf.type IN (1, 4) THEN "" ELSE COALESCE(loser_team.name, "") END as loser_name',
-        'JSON_ARRAYAGG(CASE WHEN lam.team = laf.winner THEN JSON_OBJECT("name", c.name, "race", c.race, "class", c.class, "gender", c.gender, "level", c.level) END) as winner_members',
-        'JSON_ARRAYAGG(CASE WHEN lam.team = laf.loser THEN JSON_OBJECT("name", c.name, "race", c.race, "class", c.class, "gender", c.gender, "level", c.level) END) as loser_members',
+        'JSON_ARRAYAGG(CASE WHEN lam.team = laf.winner THEN JSON_OBJECT("name", c.name, "race", c.race, "class", c.class, "gender", c.gender, "level", c.level, "damage", lam.damage, "heal", lam.heal, "kblows", lam.kblows) END) as winner_members',
+        'JSON_ARRAYAGG(CASE WHEN lam.team = laf.loser THEN JSON_OBJECT("name", c.name, "race", c.race, "class", c.class, "gender", c.gender, "level", c.level, "damage", lam.damage, "heal", lam.heal, "kblows", lam.kblows) END) as loser_members',
       ])
       .groupBy('laf.fight_id')
       .addGroupBy('laf.type')
@@ -384,6 +391,12 @@ export class CharactersService implements OnModuleInit {
       .offset((page - 1) * limit);
 
     const countQuery = this.logArenaFightsRepository.createQueryBuilder('laf');
+
+    if (query.teamId) {
+      const teamFilter = '(laf.winner = :teamId OR laf.loser = :teamId)';
+      queryBuilder.andWhere(teamFilter, { teamId: query.teamId });
+      countQuery.andWhere(teamFilter, { teamId: query.teamId });
+    }
 
     if (query.type) {
       queryBuilder.andWhere('laf.type = :type', { type: query.type });

@@ -32,4 +32,10 @@ export class LogArenaFightsQueryDto {
   @IsInt()
   @Min(1)
   type?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  teamId?: number;
 }

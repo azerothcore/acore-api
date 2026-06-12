@@ -4,6 +4,9 @@ interface CharacterMember {
   class: number;
   level: number;
   gender: number;
+  damage: number;
+  heal: number;
+  kblows: number;
 }
 
 export interface LogArenaFightResponse {
