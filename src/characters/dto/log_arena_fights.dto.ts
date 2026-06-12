@@ -12,6 +12,12 @@ export class LogArenaFightsQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  page?: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
   @Max(12)
   month?: number;
 

@@ -2,6 +2,11 @@ export interface StatusResponse {
   status: string;
 }
 
+export interface Paginated<T> {
+  data: T[];
+  total: number;
+}
+
 export interface CharacterAchievementSummary {
   guid: number;
   achievement_points: number;

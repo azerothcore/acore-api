@@ -27,6 +27,7 @@ import {
   AchievementProgressEntry,
   CharacterAchievementSummary,
   CharacterDetail,
+  Paginated,
   PlayerMonthlyGames,
   StatusResponse,
 } from './dto/characters.interface';
@@ -343,7 +344,10 @@ export class CharactersService implements OnModuleInit {
 
   async getLogArenaFights(
     query: LogArenaFightsQueryDto,
-  ): Promise<LogArenaFightResponse[]> {
+  ): Promise<Paginated<LogArenaFightResponse>> {
+    const limit = Math.min(query.limit ?? 20, 500);
+    const page = query.page ?? 1;
+
     const queryBuilder = this.logArenaFightsRepository
       .createQueryBuilder('laf')
       .leftJoin(
@@ -375,41 +379,47 @@ export class CharactersService implements OnModuleInit {
       .addGroupBy('laf.time')
       .addGroupBy('laf.loser')
       .orderBy('laf.time', 'DESC')
-      .limit((query.limit > 500 ? 500 : query.limit) || 20);
+      .addOrderBy('laf.fight_id', 'DESC')
+      .limit(limit)
+      .offset((page - 1) * limit);
+
+    const countQuery = this.logArenaFightsRepository.createQueryBuilder('laf');
 
     if (query.type) {
-      queryBuilder.andWhere('laf.type = :type', {
-        type: query.type,
-      });
+      queryBuilder.andWhere('laf.type = :type', { type: query.type });
+      countQuery.andWhere('laf.type = :type', { type: query.type });
     }
 
     if (query.year) {
-      queryBuilder.andWhere('YEAR(laf.time) = :year', {
-        year: query.year,
-      });
+      queryBuilder.andWhere('YEAR(laf.time) = :year', { year: query.year });
+      countQuery.andWhere('YEAR(laf.time) = :year', { year: query.year });
     }
 
     if (query.month) {
       queryBuilder.andWhere('MONTH(laf.time) = :month', {
         month: query.month,
       });
+      countQuery.andWhere('MONTH(laf.time) = :month', { month: query.month });
     }
 
-    const logArenaFightsResponse = (await queryBuilder.getRawMany()).map(
-      (fight: LogArenaFightResponse) => {
-        fight.winner_members = fight.winner_members.filter(
-          (member) => member !== null,
-        );
+    const [fights, total] = await Promise.all([
+      queryBuilder.getRawMany(),
+      countQuery.getCount(),
+    ]);
 
-        fight.loser_members = fight.loser_members.filter(
-          (member) => member !== null,
-        );
+    const data = fights.map((fight: LogArenaFightResponse) => {
+      fight.winner_members = fight.winner_members.filter(
+        (member) => member !== null,
+      );
 
-        return fight;
-      },
-    );
+      fight.loser_members = fight.loser_members.filter(
+        (member) => member !== null,
+      );
 
-    return logArenaFightsResponse;
+      return fight;
+    });
+
+    return { data, total };
   }
 
   async getLogArenaFightStats(
@@ -649,10 +659,13 @@ export class CharactersService implements OnModuleInit {
     excludeType?: number | number[],
     month?: number,
     year?: number,
-  ): Promise<PlayerMonthlyGames[]> {
+    page = 1,
+    limit = 100,
+  ): Promise<Paginated<PlayerMonthlyGames>> {
     const currentDate = new Date();
     const currentYear = year ?? currentDate.getFullYear();
     const currentMonth = month ?? currentDate.getMonth() + 1;
+    const pageSize = Math.min(limit, 100);
 
     // Normalize excludeType to always be an array
     const excludeTypes =
@@ -662,7 +675,6 @@ export class CharactersService implements OnModuleInit {
           : [excludeType]
         : undefined;
 
-    // Get top 100 players with most won games
     const topPlayersQuery = this.logArenaMemberstatsRepository
       .createQueryBuilder('lam')
       .leftJoin('log_arena_fights', 'laf', 'laf.fight_id = lam.fight_id')
@@ -685,18 +697,34 @@ export class CharactersService implements OnModuleInit {
       .addGroupBy('c.gender')
       .addGroupBy('c.class')
       .orderBy('totalGames', 'DESC')
-      .limit(100);
+      .addOrderBy('lam.guid', 'ASC')
+      .limit(pageSize)
+      .offset((page - 1) * pageSize);
+
+    const countQuery = this.logArenaMemberstatsRepository
+      .createQueryBuilder('lam')
+      .leftJoin('log_arena_fights', 'laf', 'laf.fight_id = lam.fight_id')
+      .select('COUNT(DISTINCT lam.guid)', 'total')
+      .where('YEAR(laf.time) = :year', { year: currentYear })
+      .andWhere('MONTH(laf.time) = :month', { month: currentMonth });
 
     if (excludeTypes !== undefined) {
       topPlayersQuery.andWhere('laf.type NOT IN (:...excludeTypes)', {
         excludeTypes,
       });
+      countQuery.andWhere('laf.type NOT IN (:...excludeTypes)', {
+        excludeTypes,
+      });
     }
 
-    const topPlayers = await topPlayersQuery.getRawMany();
+    const [topPlayers, countRow] = await Promise.all([
+      topPlayersQuery.getRawMany(),
+      countQuery.getRawOne<{ total: string }>(),
+    ]);
+    const total = parseInt(countRow?.total ?? '0', 10);
 
     if (topPlayers.length === 0) {
-      return [];
+      return { data: [], total };
     }
 
     // Get games by type for all top players
@@ -738,7 +766,7 @@ export class CharactersService implements OnModuleInit {
     });
 
     // Combine the data
-    return topPlayers.map((player) => ({
+    const data = topPlayers.map((player) => ({
       character: {
         guid: player.guid,
         name: player.name,
@@ -750,5 +778,7 @@ export class CharactersService implements OnModuleInit {
       totalGames: parseInt(player.totalGames, 10),
       gamesByType: gamesByTypeMap.get(player.guid) || [],
     }));
+
+    return { data, total };
   }
 }

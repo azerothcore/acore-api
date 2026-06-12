@@ -21,6 +21,7 @@ import { CharacterArenaStats } from './character_arena_stats.entity';
 import { Characters } from './characters.entity';
 import { CharactersService } from './characters.service';
 import { CharactersDto } from './dto/characters.dto';
+import { Paginated } from './dto/characters.interface';
 import { LogArenaFightResponse } from './dto/log_arena_fight.interface';
 import { LogArenaFightsStatsResponse } from './dto/log_arena_fight_stats.interface';
 import { LogArenaFightsQueryDto } from './dto/log_arena_fights.dto';
@@ -463,7 +464,7 @@ export class CharactersController {
   @Get('/log_arena_fights')
   async getLogArenaFights(
     @Query() query: LogArenaFightsQueryDto,
-  ): Promise<LogArenaFightResponse[]> {
+  ): Promise<Paginated<LogArenaFightResponse>> {
     return this.charactersService.getLogArenaFights(query);
   }
 
@@ -479,11 +480,15 @@ export class CharactersController {
     @Query('excludeType') excludeType?: number | number[],
     @Query('month') month?: number,
     @Query('year') year?: number,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
   ) {
     return this.charactersService.getPlayersMonthlyGames(
       excludeType,
       month,
       year,
+      page !== undefined ? +page : undefined,
+      limit !== undefined ? +limit : undefined,
     );
   }
 
