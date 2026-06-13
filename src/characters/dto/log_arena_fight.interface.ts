@@ -1,4 +1,5 @@
 interface CharacterMember {
+  guid: number;
   name: string;
   race: number;
   class: number;

@@ -38,4 +38,12 @@ export class LogArenaFightsQueryDto {
   @IsInt()
   @Min(1)
   teamId?: number;
+
+  // For 3v3 solo queue, fights are not tied to a persistent arena team, so
+  // history is looked up by the participating character's guid instead of teamId.
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  playerGuid?: number;
 }

@@ -377,8 +377,8 @@ export class CharactersService implements OnModuleInit {
         'laf.loser_tr_change as loser_tr_change',
         'CASE WHEN laf.type IN (1, 4) THEN "" ELSE COALESCE(winner_team.name, "") END as winner_name',
         'CASE WHEN laf.type IN (1, 4) THEN "" ELSE COALESCE(loser_team.name, "") END as loser_name',
-        'JSON_ARRAYAGG(CASE WHEN lam.team = laf.winner THEN JSON_OBJECT("name", c.name, "race", c.race, "class", c.class, "gender", c.gender, "level", c.level, "damage", lam.damage, "heal", lam.heal, "kblows", lam.kblows) END) as winner_members',
-        'JSON_ARRAYAGG(CASE WHEN lam.team = laf.loser THEN JSON_OBJECT("name", c.name, "race", c.race, "class", c.class, "gender", c.gender, "level", c.level, "damage", lam.damage, "heal", lam.heal, "kblows", lam.kblows) END) as loser_members',
+        'JSON_ARRAYAGG(CASE WHEN lam.team = laf.winner THEN JSON_OBJECT("guid", lam.guid, "name", c.name, "race", c.race, "class", c.class, "gender", c.gender, "level", c.level, "damage", lam.damage, "heal", lam.heal, "kblows", lam.kblows) END) as winner_members',
+        'JSON_ARRAYAGG(CASE WHEN lam.team = laf.loser THEN JSON_OBJECT("guid", lam.guid, "name", c.name, "race", c.race, "class", c.class, "gender", c.gender, "level", c.level, "damage", lam.damage, "heal", lam.heal, "kblows", lam.kblows) END) as loser_members',
       ])
       .groupBy('laf.fight_id')
       .addGroupBy('laf.type')
@@ -396,6 +396,13 @@ export class CharactersService implements OnModuleInit {
       const teamFilter = '(laf.winner = :teamId OR laf.loser = :teamId)';
       queryBuilder.andWhere(teamFilter, { teamId: query.teamId });
       countQuery.andWhere(teamFilter, { teamId: query.teamId });
+    }
+
+    if (query.playerGuid) {
+      const playerFilter =
+        'EXISTS (SELECT 1 FROM log_arena_memberstats lam_f WHERE lam_f.fight_id = laf.fight_id AND lam_f.guid = :playerGuid)';
+      queryBuilder.andWhere(playerFilter, { playerGuid: query.playerGuid });
+      countQuery.andWhere(playerFilter, { playerGuid: query.playerGuid });
     }
 
     if (query.type) {
