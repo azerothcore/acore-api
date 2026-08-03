@@ -14,6 +14,8 @@ ENDPOINTS=(
   "/characters/search/worldstates"
   "/characters/recoveryItemList/1"
   "/characters/recoveryHeroList"
+  "/characters/challenge_modes/stats"
+  "/characters/challenge_modes/leaderboard?challenge=1"
   "/auth/logout"
   "/auth/pulse/7"
 )
