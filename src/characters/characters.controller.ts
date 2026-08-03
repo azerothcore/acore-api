@@ -7,6 +7,7 @@ import {
   Post,
   Query,
   UseGuards,
+  ValidationPipe,
 } from '@nestjs/common';
 
 import { InjectDataSource } from '@nestjs/typeorm';
@@ -20,6 +21,11 @@ import { BattlegroundDeserters } from './battleground_deserters.entity';
 import { CharacterArenaStats } from './character_arena_stats.entity';
 import { Characters } from './characters.entity';
 import { CharactersService } from './characters.service';
+import { ChallengeModesLeaderboardQueryDto } from './dto/challenge_modes.dto';
+import {
+  ChallengeModeCharacter,
+  ChallengeModeStats,
+} from './dto/challenge_modes.interface';
 import { CharactersDto } from './dto/characters.dto';
 import { Paginated } from './dto/characters.interface';
 import { LogArenaFightResponse } from './dto/log_arena_fight.interface';
@@ -490,6 +496,19 @@ export class CharactersController {
       page !== undefined ? +page : undefined,
       limit !== undefined ? +limit : undefined,
     );
+  }
+
+  @Get('/challenge_modes/leaderboard')
+  async getChallengeModesLeaderboard(
+    @Query(new ValidationPipe({ transform: true, whitelist: true }))
+    query: ChallengeModesLeaderboardQueryDto,
+  ): Promise<Paginated<ChallengeModeCharacter>> {
+    return this.charactersService.getChallengeModesLeaderboard(query);
+  }
+
+  @Get('/challenge_modes/stats')
+  async getChallengeModesStats(): Promise<ChallengeModeStats[]> {
+    return this.charactersService.getChallengeModesStats();
   }
 
   @Get('/:guid')

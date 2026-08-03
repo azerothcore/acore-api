@@ -22,6 +22,14 @@ import { CharacterAchievement } from './character_achievement.entity';
 import { CharacterAchievementProgress } from './character_achievement_progress.entity';
 import { CharacterBanned } from './character_banned.entity';
 import { Characters } from './characters.entity';
+import {
+  ChallengeModesLeaderboardQueryDto,
+  ChallengeModeStatus,
+} from './dto/challenge_modes.dto';
+import {
+  ChallengeModeCharacter,
+  ChallengeModeStats,
+} from './dto/challenge_modes.interface';
 import { CharactersDto } from './dto/characters.dto';
 import {
   AchievementProgressEntry,
@@ -64,8 +72,23 @@ export class CharactersService implements OnModuleInit {
     private readonly characterAchievementProgressRepository: Repository<CharacterAchievementProgress>,
     @InjectDataSource('authConnection')
     private readonly authDataSource: DataSource,
+    @InjectDataSource('charactersConnection')
+    private readonly charactersDataSource: DataSource,
     private readonly dbcService: DbcService,
   ) {}
+
+  // The challenge-modes module (r-o-b-o-t-o/challenge-modes) stores its tables in a
+  // separate Eluna schema on the same server as the characters DB, so they are
+  // reachable from the characters connection only when fully qualified.
+  private challengeModesTable(): string {
+    const database = process.env.ELUNA_DATABASE_NAME || 'acore_eluna';
+
+    if (!/^[A-Za-z0-9_$]+$/.test(database)) {
+      throw new Error(`Invalid ELUNA_DATABASE_NAME: ${database}`);
+    }
+
+    return `\`${database}\`.challenge_modes_character`;
+  }
 
   async onModuleInit() {
     await this.refreshAchievementsSummary();
@@ -800,5 +823,105 @@ export class CharactersService implements OnModuleInit {
     }));
 
     return { data, total };
+  }
+
+  async getChallengeModesLeaderboard(
+    query: ChallengeModesLeaderboardQueryDto,
+  ): Promise<Paginated<ChallengeModeCharacter>> {
+    const limit = Math.min(Math.max(query.limit ?? 20, 1), 100);
+    const page = Math.max(query.page ?? 1, 1);
+    const status = query.status ?? ChallengeModeStatus.All;
+
+    const table = this.challengeModesTable();
+    const params: unknown[] = [query.challenge];
+
+    // Characters deleted while their run was still going lose their row entirely, but
+    // a run abandoned via the character deletion queue keeps one, so active runs are
+    // filtered against the live characters table the same way the in-game board does.
+    const activeJoin =
+      status === ChallengeModeStatus.Active
+        ? 'INNER JOIN characters c ON c.guid = cmc.guid AND c.deleteInfos_Account IS NULL'
+        : '';
+
+    const statusCondition = {
+      [ChallengeModeStatus.All]: '',
+      [ChallengeModeStatus.Active]: 'AND cmc.completed = 0 AND cmc.dead = 0',
+      [ChallengeModeStatus.Completed]: 'AND cmc.completed = 1',
+      [ChallengeModeStatus.Dead]: 'AND cmc.dead = 1',
+    }[status];
+
+    // Ranks are computed over the whole bracket before the name/class filters are
+    // applied, so a filtered view still shows each character's true standing.
+    const outerConditions: string[] = [];
+
+    if (query.name) {
+      outerConditions.push('ranked.name LIKE CONCAT(?, "%")');
+      params.push(query.name);
+    }
+
+    if (query.class) {
+      outerConditions.push('ranked.class = ?');
+      params.push(query.class);
+    }
+
+    const outerWhere = outerConditions.length
+      ? `WHERE ${outerConditions.join(' AND ')}`
+      : '';
+
+    // played_time is NULL for characters that never levelled up; sorting those last
+    // keeps them from outranking characters with a recorded time at the same level.
+    const rankedSubQuery = `
+      SELECT cmc.guid, cmc.account, cmc.name, cmc.race, cmc.class, cmc.gender,
+             cmc.level, cmc.challenge, cmc.completed, cmc.dead, cmc.died_on,
+             cmc.char_deleted, cmc.played_time,
+             RANK() OVER (
+               ORDER BY cmc.completed DESC, cmc.level DESC,
+                        cmc.played_time IS NULL, cmc.played_time ASC
+             ) AS \`rank\`
+      FROM ${table} cmc
+      ${activeJoin}
+      WHERE cmc.challenge = ?
+      ${statusCondition}
+    `;
+
+    const [rows, countRows] = await Promise.all([
+      this.charactersDataSource.query(
+        `SELECT * FROM (${rankedSubQuery}) ranked
+         ${outerWhere}
+         ORDER BY \`rank\` ASC, ranked.name ASC
+         LIMIT ? OFFSET ?`,
+        [...params, limit, (page - 1) * limit],
+      ),
+      this.charactersDataSource.query(
+        `SELECT COUNT(*) AS total FROM (${rankedSubQuery}) ranked ${outerWhere}`,
+        params,
+      ),
+    ]);
+
+    // RANK() comes back as a BIGINT, which the driver hands over as a string.
+    const data = rows.map((row) => ({ ...row, rank: Number(row.rank) }));
+
+    return { data, total: parseInt(countRows[0].total, 10) };
+  }
+
+  async getChallengeModesStats(): Promise<ChallengeModeStats[]> {
+    const rows = await this.charactersDataSource.query(
+      `SELECT cmc.challenge AS challenge,
+              COUNT(*) AS total,
+              SUM(cmc.completed = 0 AND cmc.dead = 0) AS active,
+              SUM(cmc.completed = 1) AS completed,
+              SUM(cmc.dead = 1) AS dead
+       FROM ${this.challengeModesTable()} cmc
+       GROUP BY cmc.challenge
+       ORDER BY cmc.challenge ASC`,
+    );
+
+    return rows.map((row) => ({
+      challenge: Number(row.challenge),
+      total: Number(row.total),
+      active: Number(row.active),
+      completed: Number(row.completed),
+      dead: Number(row.dead),
+    }));
   }
 }
