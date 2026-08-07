@@ -24,6 +24,8 @@ import { CharacterBanned } from './character_banned.entity';
 import { Characters } from './characters.entity';
 import {
   ChallengeModesLeaderboardQueryDto,
+  ChallengeModeSort,
+  ChallengeModeSortDirection,
   ChallengeModeStatus,
 } from './dto/challenge_modes.dto';
 import {
@@ -868,12 +870,28 @@ export class CharactersService implements OnModuleInit {
       ? `WHERE ${outerConditions.join(' AND ')}`
       : '';
 
+    // The module records no completion date: it flips `completed` on the level-up that
+    // reaches the cap, so the date of the matching level milestone achievement
+    // (6 = level 10, 7 = level 20 … 13 = level 80) is the moment the run was won. It is
+    // NULL for characters whose achievements are gone, i.e. hard-deleted ones.
+    //
+    // Wrapped in IF rather than written as a LEFT JOIN so the lookup runs only for the
+    // handful of completed runs: as a join condition `completed = 1` is filtered after
+    // the index dive, costing one dive per row of the whole bracket.
+    const completedOn = `
+      IF(cmc.completed = 1,
+         (SELECT lvl.date FROM character_achievement lvl
+           WHERE lvl.guid = cmc.guid
+             AND lvl.achievement = 5 + FLOOR(cmc.level / 10)),
+         NULL)
+    `;
+
     // played_time is NULL for characters that never levelled up; sorting those last
     // keeps them from outranking characters with a recorded time at the same level.
     const rankedSubQuery = `
       SELECT cmc.guid, cmc.account, cmc.name, cmc.race, cmc.class, cmc.gender,
              cmc.level, cmc.challenge, cmc.completed, cmc.dead, cmc.died_on,
-             cmc.char_deleted, cmc.played_time,
+             cmc.char_deleted, cmc.played_time, ${completedOn} AS completed_on,
              RANK() OVER (
                ORDER BY cmc.completed DESC, cmc.level DESC,
                         cmc.played_time IS NULL, cmc.played_time ASC
@@ -888,7 +906,7 @@ export class CharactersService implements OnModuleInit {
       this.charactersDataSource.query(
         `SELECT * FROM (${rankedSubQuery}) ranked
          ${outerWhere}
-         ORDER BY \`rank\` ASC, ranked.name ASC
+         ORDER BY ${this.challengeModesOrderBy(query)}
          LIMIT ? OFFSET ?`,
         [...params, limit, (page - 1) * limit],
       ),
@@ -902,6 +920,40 @@ export class CharactersService implements OnModuleInit {
     const data = rows.map((row) => ({ ...row, rank: Number(row.rank) }));
 
     return { data, total: parseInt(countRows[0].total, 10) };
+  }
+
+  private challengeModesOrderBy(
+    query: ChallengeModesLeaderboardQueryDto,
+  ): string {
+    const sort = query.sort ?? ChallengeModeSort.Rank;
+
+    const columns = {
+      [ChallengeModeSort.Rank]: '`rank`',
+      [ChallengeModeSort.Level]: 'ranked.level',
+      [ChallengeModeSort.PlayedTime]: 'ranked.played_time',
+      [ChallengeModeSort.Date]: 'COALESCE(ranked.completed_on, ranked.died_on)',
+    };
+
+    const defaultDirections = {
+      [ChallengeModeSort.Rank]: ChallengeModeSortDirection.Asc,
+      [ChallengeModeSort.Level]: ChallengeModeSortDirection.Desc,
+      [ChallengeModeSort.PlayedTime]: ChallengeModeSortDirection.Asc,
+      [ChallengeModeSort.Date]: ChallengeModeSortDirection.Desc,
+    };
+
+    const column = columns[sort];
+    const direction =
+      (query.direction ?? defaultDirections[sort]) ===
+      ChallengeModeSortDirection.Desc
+        ? 'DESC'
+        : 'ASC';
+
+    // Characters without a value for the sorted column go last in either direction,
+    // so a page never opens on a block of blanks.
+    const nullsLast =
+      sort === ChallengeModeSort.Rank ? '' : `${column} IS NULL, `;
+
+    return `${nullsLast}${column} ${direction}, ranked.name ASC`;
   }
 
   async getChallengeModesStats(): Promise<ChallengeModeStats[]> {
