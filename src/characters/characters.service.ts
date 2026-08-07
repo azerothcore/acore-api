@@ -931,6 +931,8 @@ export class CharactersService implements OnModuleInit {
       [ChallengeModeSort.Rank]: '`rank`',
       [ChallengeModeSort.Level]: 'ranked.level',
       [ChallengeModeSort.PlayedTime]: 'ranked.played_time',
+      [ChallengeModeSort.Status]:
+        'CASE WHEN ranked.completed = 1 THEN 2 WHEN ranked.dead = 1 THEN 0 ELSE 1 END',
       [ChallengeModeSort.Date]: 'COALESCE(ranked.completed_on, ranked.died_on)',
     };
 
@@ -938,8 +940,14 @@ export class CharactersService implements OnModuleInit {
       [ChallengeModeSort.Rank]: ChallengeModeSortDirection.Asc,
       [ChallengeModeSort.Level]: ChallengeModeSortDirection.Desc,
       [ChallengeModeSort.PlayedTime]: ChallengeModeSortDirection.Asc,
+      [ChallengeModeSort.Status]: ChallengeModeSortDirection.Desc,
       [ChallengeModeSort.Date]: ChallengeModeSortDirection.Desc,
     };
+
+    // Rank and status are computed from NOT NULL columns, so they never need the
+    // nulls-last guard below.
+    const nullable =
+      sort !== ChallengeModeSort.Rank && sort !== ChallengeModeSort.Status;
 
     const column = columns[sort];
     const direction =
@@ -950,8 +958,7 @@ export class CharactersService implements OnModuleInit {
 
     // Characters without a value for the sorted column go last in either direction,
     // so a page never opens on a block of blanks.
-    const nullsLast =
-      sort === ChallengeModeSort.Rank ? '' : `${column} IS NULL, `;
+    const nullsLast = nullable ? `${column} IS NULL, ` : '';
 
     return `${nullsLast}${column} ${direction}, ranked.name ASC`;
   }

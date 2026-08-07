@@ -20,6 +20,8 @@ export enum ChallengeModeSort {
   Rank = 'rank',
   Level = 'level',
   PlayedTime = 'played_time',
+  // Completed, then still going, then fallen.
+  Status = 'status',
   // The date the run ended: the completion date for finished runs, the death date
   // for fallen ones. Runs still going have none and always sort last.
   Date = 'date',
