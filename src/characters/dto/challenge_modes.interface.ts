@@ -11,6 +11,7 @@ export interface ChallengeModeCharacter {
   completed: number;
   dead: number;
   died_on: number | null;
+  completed_on: number | null;
   char_deleted: number;
   played_time: number | null;
 }
