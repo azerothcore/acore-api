@@ -886,10 +886,25 @@ export class CharactersService implements OnModuleInit {
          NULL)
     `;
 
+    // The module snapshots gender with Eluna's Player:GetGender(), which reads the unit
+    // field that shapeshift models overwrite: creature_model_info.Gender is 2 (none) for
+    // cat, moonkin, ghost wolf and friends, so a druid or shaman caught mid-form is stored
+    // as gender 2. characters.gender is saved from PLAYER_BYTES_3 instead and is always
+    // male or female, so it recovers the real value. Hard-deleted characters are gone from
+    // that table and fall back to 0.
+    //
+    // IF-wrapped for the same reason as completed_on below: the lookup then runs only for
+    // the few affected rows rather than once per row of the whole bracket.
+    const gender = `
+      IF(cmc.gender > 1,
+         COALESCE((SELECT g.gender FROM characters g WHERE g.guid = cmc.guid), 0),
+         cmc.gender)
+    `;
+
     // played_time is NULL for characters that never levelled up; sorting those last
     // keeps them from outranking characters with a recorded time at the same level.
     const rankedSubQuery = `
-      SELECT cmc.guid, cmc.account, cmc.name, cmc.race, cmc.class, cmc.gender,
+      SELECT cmc.guid, cmc.account, cmc.name, cmc.race, cmc.class, ${gender} AS gender,
              cmc.level, cmc.challenge, cmc.completed, cmc.dead, cmc.died_on,
              cmc.char_deleted, cmc.played_time, ${completedOn} AS completed_on,
              RANK() OVER (
