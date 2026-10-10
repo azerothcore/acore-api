@@ -7,16 +7,15 @@ import {
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Like, Repository } from 'typeorm';
+import { AccountInformation } from '../auth/account_information.entity';
+import { Misc } from '../shared/misc';
+import { Soap } from '../shared/soap';
 import {
   AchievementCategory,
   AchievementWithQuantity,
 } from '../storage/dbc.interface';
-import { DataSource, Like, Repository } from 'typeorm';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { AccountInformation } from '../auth/account_information.entity';
-import { Misc } from '../shared/misc';
-import { Soap } from '../shared/soap';
 import { DbcService } from '../storage/dbc.service';
 import { CharacterAchievement } from './character_achievement.entity';
 import { CharacterAchievementProgress } from './character_achievement_progress.entity';
@@ -213,9 +212,6 @@ export class CharactersService implements OnModuleInit {
       throw new NotFoundException(['Item Not Found']);
     }
 
-    // Guid is part of the delete key so a row can never be consumed on behalf of
-    // another character, and `affected` stops concurrent requests from mailing
-    // the same row more than once.
     const { affected } = await this.recoveryItemRepository.delete({
       Id: recoveryItem.Id,
       Guid: character.guid,
