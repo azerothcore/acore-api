@@ -7,16 +7,15 @@ import {
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Like, Repository } from 'typeorm';
+import { AccountInformation } from '../auth/account_information.entity';
+import { Misc } from '../shared/misc';
+import { Soap } from '../shared/soap';
 import {
   AchievementCategory,
   AchievementWithQuantity,
 } from '../storage/dbc.interface';
-import { DataSource, Like, Repository } from 'typeorm';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { AccountInformation } from '../auth/account_information.entity';
-import { Misc } from '../shared/misc';
-import { Soap } from '../shared/soap';
 import { DbcService } from '../storage/dbc.service';
 import { CharacterAchievement } from './character_achievement.entity';
 import { CharacterAchievementProgress } from './character_achievement_progress.entity';
@@ -179,43 +178,53 @@ export class CharactersService implements OnModuleInit {
     guid: number,
     accountId: number,
   ): Promise<RecoveryItem[]> {
-    const characters = await this.charactersRepository.findOne({
+    const character = await this.charactersRepository.findOne({
       select: ['guid'],
-      where: { account: accountId },
+      where: { account: accountId, guid },
     });
 
-    if (characters?.guid !== +guid) {
+    if (!character) {
       throw new NotFoundException(['Account with that character not found']);
     }
 
-    return await this.recoveryItemRepository.find({ where: { Guid: guid } });
+    return await this.recoveryItemRepository.find({
+      where: { Guid: character.guid },
+    });
   }
 
   async recoveryItem(
     recoveryItemDto: RecoveryItemDTO,
     accountId: number,
   ): Promise<StatusResponse> {
-    const characters = await this.charactersRepository.findOne({
+    const character = await this.charactersRepository.findOne({
       select: ['guid', 'name'],
-      where: { account: accountId },
-    });
-    const recoveryItem = await this.recoveryItemRepository.findOne({
-      select: ['Count'],
-      where: { Id: recoveryItemDto.id },
+      where: { account: accountId, guid: recoveryItemDto.guid },
     });
 
-    if (characters?.guid !== recoveryItemDto.guid) {
+    if (!character) {
       throw new NotFoundException(['Account with that character not found']);
     }
+
+    const recoveryItem = await this.recoveryItemRepository.findOne({
+      select: ['Id', 'ItemEntry', 'Count'],
+      where: { Id: recoveryItemDto.id, Guid: character.guid },
+    });
 
     if (!recoveryItem) {
       throw new NotFoundException(['Item Not Found']);
     }
 
-    await this.recoveryItemRepository.delete({ Id: recoveryItemDto.id });
+    const { affected } = await this.recoveryItemRepository.delete({
+      Id: recoveryItem.Id,
+      Guid: character.guid,
+    });
+
+    if (!affected) {
+      throw new NotFoundException(['Item Not Found']);
+    }
 
     Soap.command(
-      `send items ${characters.name} "Recovery Item" "AzerothJS Recovery Item" ${recoveryItemDto.itemEntry}:${recoveryItem.Count}`,
+      `send items ${character.name} "Recovery Item" "AzerothJS Recovery Item" ${recoveryItem.ItemEntry}:${recoveryItem.Count}`,
     );
 
     return { status: 'success' };

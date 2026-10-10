@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -313,7 +314,7 @@ export class CharactersController {
   @Get('/recoveryItemList/:guid')
   @UseGuards(AuthGuard)
   async recoveryItemList(
-    @Param('guid') guid: number,
+    @Param('guid', ParseIntPipe) guid: number,
     @Account('id') accountId: number,
   ): Promise<RecoveryItem[]> {
     return this.charactersService.recoveryItemList(guid, accountId);
@@ -322,7 +323,7 @@ export class CharactersController {
   @Post('/recoveryItem')
   @UseGuards(AuthGuard)
   async recoveryItem(
-    @Body() recoveryItemDto: RecoveryItemDTO,
+    @Body(ValidationPipe) recoveryItemDto: RecoveryItemDTO,
     @Account('id') accountId: number,
   ) {
     return this.charactersService.recoveryItem(recoveryItemDto, accountId);
