@@ -195,27 +195,38 @@ export class CharactersService implements OnModuleInit {
     recoveryItemDto: RecoveryItemDTO,
     accountId: number,
   ): Promise<StatusResponse> {
-    const characters = await this.charactersRepository.findOne({
+    const character = await this.charactersRepository.findOne({
       select: ['guid', 'name'],
-      where: { account: accountId },
-    });
-    const recoveryItem = await this.recoveryItemRepository.findOne({
-      select: ['Count'],
-      where: { Id: recoveryItemDto.id },
+      where: { account: accountId, guid: recoveryItemDto.guid },
     });
 
-    if (characters?.guid !== recoveryItemDto.guid) {
+    if (!character) {
       throw new NotFoundException(['Account with that character not found']);
     }
+
+    const recoveryItem = await this.recoveryItemRepository.findOne({
+      select: ['Id', 'ItemEntry', 'Count'],
+      where: { Id: recoveryItemDto.id, Guid: character.guid },
+    });
 
     if (!recoveryItem) {
       throw new NotFoundException(['Item Not Found']);
     }
 
-    await this.recoveryItemRepository.delete({ Id: recoveryItemDto.id });
+    // Guid is part of the delete key so a row can never be consumed on behalf of
+    // another character, and `affected` stops concurrent requests from mailing
+    // the same row more than once.
+    const { affected } = await this.recoveryItemRepository.delete({
+      Id: recoveryItem.Id,
+      Guid: character.guid,
+    });
+
+    if (!affected) {
+      throw new NotFoundException(['Item Not Found']);
+    }
 
     Soap.command(
-      `send items ${characters.name} "Recovery Item" "AzerothJS Recovery Item" ${recoveryItemDto.itemEntry}:${recoveryItem.Count}`,
+      `send items ${character.name} "Recovery Item" "AzerothJS Recovery Item" ${recoveryItem.ItemEntry}:${recoveryItem.Count}`,
     );
 
     return { status: 'success' };

@@ -322,7 +322,7 @@ export class CharactersController {
   @Post('/recoveryItem')
   @UseGuards(AuthGuard)
   async recoveryItem(
-    @Body() recoveryItemDto: RecoveryItemDTO,
+    @Body(ValidationPipe) recoveryItemDto: RecoveryItemDTO,
     @Account('id') accountId: number,
   ) {
     return this.charactersService.recoveryItem(recoveryItemDto, accountId);

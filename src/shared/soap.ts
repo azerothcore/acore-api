@@ -21,6 +21,18 @@ export class Soap {
     req.end();
   }
 
+  private static escapeXml(value: string): string {
+    const entities: Record<string, string> = {
+      '<': '&lt;',
+      '>': '&gt;',
+      '&': '&amp;',
+      '"': '&quot;',
+      "'": '&apos;',
+    };
+
+    return value.replace(/[<>&"']/g, (char) => entities[char]);
+  }
+
   private static execute(command: string): string {
     return `
         <?xml version="1.0" encoding="utf-8"?>
@@ -31,7 +43,7 @@ export class Soap {
         xmlns:ns1="${process.env.SOAP_URI}">
     
         <SOAP-ENV:Body>
-            <ns1:executeCommand><command>${command}</command></ns1:executeCommand>
+            <ns1:executeCommand><command>${Soap.escapeXml(command)}</command></ns1:executeCommand>
         </SOAP-ENV:Body>
     
         </SOAP-ENV:Envelope>
