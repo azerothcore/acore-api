@@ -32,19 +32,33 @@ const matches = (
   where: Record<string, unknown>,
 ): boolean => Object.entries(where).every(([key, value]) => row[key] === value);
 
+// Like TypeORM, hand back only the selected columns.
+const only = (
+  row: Record<string, unknown>,
+  select: string[] = Object.keys(row),
+): Record<string, unknown> =>
+  Object.fromEntries(select.map((key) => [key, row[key]]));
+
 describe('CharactersService', () => {
   let service: CharactersService;
   let recoveryItems: typeof RECOVERY_ITEMS;
-  let recoveryItemRepository: { findOne: jest.Mock; delete: jest.Mock };
+  let recoveryItemRepository: {
+    find: jest.Mock;
+    findOne: jest.Mock;
+    delete: jest.Mock;
+  };
   let soap: jest.SpyInstance;
 
   beforeEach(async () => {
     recoveryItems = RECOVERY_ITEMS.map((row) => ({ ...row }));
     recoveryItemRepository = {
-      findOne: jest.fn(
-        async ({ where }) =>
-          recoveryItems.find((row) => matches(row, where)) ?? null,
+      find: jest.fn(async ({ where }) =>
+        recoveryItems.filter((row) => matches(row, where)),
       ),
+      findOne: jest.fn(async ({ select, where }) => {
+        const row = recoveryItems.find((item) => matches(item, where));
+        return row ? only(row, select) : null;
+      }),
       delete: jest.fn(async (where) => {
         const remaining = recoveryItems.filter((row) => !matches(row, where));
         const affected = recoveryItems.length - remaining.length;
@@ -53,10 +67,10 @@ describe('CharactersService', () => {
       }),
     };
     const charactersRepository = {
-      findOne: jest.fn(
-        async ({ where }) =>
-          CHARACTERS.find((row) => matches(row, where)) ?? null,
-      ),
+      findOne: jest.fn(async ({ select, where }) => {
+        const row = CHARACTERS.find((item) => matches(item, where));
+        return row ? only(row, select) : null;
+      }),
     };
 
     const module = await Test.createTestingModule({
@@ -92,6 +106,24 @@ describe('CharactersService', () => {
   });
 
   afterEach(() => jest.restoreAllMocks());
+
+  describe('recoveryItemList', () => {
+    it('lists the rows of any character of the account', async () => {
+      await expect(service.recoveryItemList(9, 2)).resolves.toEqual([
+        { Id: 57, Guid: 9, ItemEntry: 4306, Count: 1 },
+      ]);
+      expect(recoveryItemRepository.find).toHaveBeenCalledWith({
+        where: { Guid: 9 },
+      });
+    });
+
+    it('rejects a character that does not belong to the account', async () => {
+      await expect(service.recoveryItemList(3, 2)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(recoveryItemRepository.find).not.toHaveBeenCalled();
+    });
+  });
 
   describe('recoveryItem', () => {
     it('mails the stored item of a row owned by the requested character', async () => {

@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -313,7 +314,7 @@ export class CharactersController {
   @Get('/recoveryItemList/:guid')
   @UseGuards(AuthGuard)
   async recoveryItemList(
-    @Param('guid') guid: number,
+    @Param('guid', ParseIntPipe) guid: number,
     @Account('id') accountId: number,
   ): Promise<RecoveryItem[]> {
     return this.charactersService.recoveryItemList(guid, accountId);

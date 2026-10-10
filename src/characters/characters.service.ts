@@ -178,16 +178,18 @@ export class CharactersService implements OnModuleInit {
     guid: number,
     accountId: number,
   ): Promise<RecoveryItem[]> {
-    const characters = await this.charactersRepository.findOne({
+    const character = await this.charactersRepository.findOne({
       select: ['guid'],
-      where: { account: accountId },
+      where: { account: accountId, guid },
     });
 
-    if (characters?.guid !== +guid) {
+    if (!character) {
       throw new NotFoundException(['Account with that character not found']);
     }
 
-    return await this.recoveryItemRepository.find({ where: { Guid: guid } });
+    return await this.recoveryItemRepository.find({
+      where: { Guid: character.guid },
+    });
   }
 
   async recoveryItem(
