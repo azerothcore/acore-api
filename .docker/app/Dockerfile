@@ -1,4 +1,4 @@
-FROM node:22-alpine As development
+FROM node:22.23.4-alpine As development
 
 RUN apk add --no-cache python3 make g++
 
